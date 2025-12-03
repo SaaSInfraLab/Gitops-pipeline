@@ -1,0 +1,7 @@
+# This directory contains Flux Kustomization resources for sample-saas-app
+# Each tenant has its own Kustomization resource managed by Flux CD
+#
+# Platform tenant: sample-saas-app-platform/kustomization.yaml
+# Analytics tenant: sample-saas-app-analytics/kustomization.yaml
+#
+# These are applied automatically by Flux when bootstrapped

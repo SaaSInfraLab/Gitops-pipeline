@@ -1,0 +1,118 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: analytics
+
+resources:
+  - ../../base
+
+commonLabels:
+  tenant: analytics
+  environment: dev
+  app.kubernetes.io/managed-by: flux
+
+images:
+  - name: task-management-backend
+    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
+    newTag: latest
+  - name: task-management-frontend
+    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
+    newTag: latest
+
+patches:
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/tenant
+        value: analytics
+      - op: remove
+        path: /spec/template/spec/serviceAccountName
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2
+        value:
+          name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-host
+      - op: replace
+        path: /spec/template/spec/containers/0/env/3
+        value:
+          name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-port
+      - op: replace
+        path: /spec/template/spec/containers/0/env/4
+        value:
+          name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-name
+      - op: replace
+        path: /spec/template/spec/containers/0/env/5
+        value:
+          name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-user
+      - op: replace
+        path: /spec/template/spec/containers/0/env/6
+        value:
+          name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-password
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: METRICS_ENABLED
+          value: "true"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "50m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "200m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/10/value
+        value: "--max-old-space-size=600"
+    target:
+      kind: Deployment
+      name: backend
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/tenant
+        value: analytics
+    target:
+      kind: Deployment
+      name: frontend
+  - patch: |-
+      - op: add
+        path: /metadata/labels/tenant
+        value: analytics
+      - op: add
+        path: /spec/selector/tenant
+        value: analytics
+    target:
+      kind: Service
+      name: backend-service
+  - patch: |-
+      - op: add
+        path: /metadata/labels/tenant
+        value: analytics
+      - op: add
+        path: /spec/selector/tenant
+        value: analytics
+    target:
+      kind: Service
+      name: frontend-service

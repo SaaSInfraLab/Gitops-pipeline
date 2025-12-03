@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sample-app-green
+
+resources:
+  - ../base
+
+namePrefix: green-
+
+commonLabels:
+  version: green
+  environment: green
+
+patches:
+  - patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/version
+        value: green
+    target:
+      kind: Deployment
+

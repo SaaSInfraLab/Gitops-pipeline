@@ -1,0 +1,27 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: REPOSITORY_NAME
+  namespace: flux-system
+spec:
+  interval: 1h0m0s
+  url: https://REPOSITORY_URL
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: RELEASE_NAME
+  namespace: NAMESPACE
+spec:
+  interval: 5m0s
+  chart:
+    spec:
+      chart: CHART_NAME
+      sourceRef:
+        kind: HelmRepository
+        name: REPOSITORY_NAME
+      version: CHART_VERSION
+  values:
+    # Add your Helm values here
+    key: value
+

@@ -1,0 +1,51 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sample-saas-app
+
+resources:
+  - ../../base
+
+namePrefix: prod-
+nameSuffix: ""
+
+replicas:
+  - name: backend
+    count: 2
+  - name: frontend
+    count: 2
+
+images:
+  - name: task-management-backend
+    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-prod-backend
+    newTag: latest
+  - name: task-management-frontend
+    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-prod-frontend
+    newTag: latest
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: "production"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "200m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "4Gi"
+    target:
+      kind: Deployment
+      name: backend
+      namespace: sample-saas-app
+
+commonLabels:
+  environment: prod
+  tenant: platform
+

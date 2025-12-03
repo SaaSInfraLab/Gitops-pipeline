@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data
+  labels:
+    tenant: data
+    managed-by: flux
+    environment: dev
+

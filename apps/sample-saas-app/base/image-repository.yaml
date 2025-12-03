@@ -1,0 +1,21 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: sample-saas-app-frontend
+  namespace: flux-system
+spec:
+  image: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
+  interval: 1h0m0s
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: sample-saas-app-frontend
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: sample-saas-app-frontend
+  policy:
+    semver:
+      range: '>=1.0.0'
+

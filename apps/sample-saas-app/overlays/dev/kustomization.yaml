@@ -1,0 +1,11 @@
+# Dev environment overlay (if needed for environment-specific configs)
+# Currently, platform and analytics overlays handle tenant-specific configs
+# This overlay can be used for dev-specific overrides if needed
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Add dev-specific patches here if needed

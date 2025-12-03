@@ -1,0 +1,149 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-rds-database
+  labels:
+    app: sample-saas-app
+    component: database-init
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init-db
+        image: postgres:15-alpine
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-host
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-name
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Initializing RDS database..."
+          export PGPASSWORD=${DB_PASSWORD}
+          
+          echo "Running migration 001_create_tenants.sql..."
+          psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -f /migrations/001_create_tenants.sql
+          
+          echo "Running migration 002_create_users.sql..."
+          psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -f /migrations/002_create_users.sql
+          
+          echo "Running migration 003_create_tasks.sql..."
+          psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -f /migrations/003_create_tasks.sql
+          
+          echo "Verifying database..."
+          psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -c "SELECT COUNT(*) FROM tenants; SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'tenant_%';"
+          
+          echo "Database initialization complete!"
+        volumeMounts:
+        - name: migrations
+          mountPath: /migrations
+      volumes:
+      - name: migrations
+        configMap:
+          name: db-init-scripts
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-scripts
+  labels:
+    app: sample-saas-app
+    component: database-init
+data:
+  001_create_tenants.sql: |
+    -- Create tenant schemas
+    CREATE SCHEMA IF NOT EXISTS tenant_platform;
+    CREATE SCHEMA IF NOT EXISTS tenant_analytics;
+    
+    -- Create tenant metadata table
+    CREATE TABLE IF NOT EXISTS tenants (
+        id SERIAL PRIMARY KEY,
+        tenant_id VARCHAR(50) UNIQUE NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        namespace VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+    );
+    
+    INSERT INTO tenants (tenant_id, name, namespace) VALUES
+        ('platform', 'Platform Team', 'platform'),
+        ('analytics', 'Analytics Team', 'analytics')
+    ON CONFLICT (tenant_id) DO NOTHING;
+  
+  002_create_users.sql: |
+    -- Create users table function
+    CREATE OR REPLACE FUNCTION create_users_table(schema_name TEXT)
+    RETURNS VOID AS $$
+    BEGIN
+        EXECUTE format('
+            CREATE TABLE IF NOT EXISTS %I.users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                tenant_id VARCHAR(50) NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS idx_users_email ON %I.users(email);
+        ', schema_name, schema_name);
+    END;
+    $$ LANGUAGE plpgsql;
+    
+    SELECT create_users_table('tenant_platform');
+    SELECT create_users_table('tenant_analytics');
+    DROP FUNCTION IF EXISTS create_users_table(TEXT);
+  
+  003_create_tasks.sql: |
+    -- Create tasks table function
+    CREATE OR REPLACE FUNCTION create_tasks_table(schema_name TEXT)
+    RETURNS VOID AS $$
+    BEGIN
+        EXECUTE format('
+            CREATE TABLE IF NOT EXISTS %I.tasks (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                status VARCHAR(50) DEFAULT ''todo'' CHECK (status IN (''todo'', ''in_progress'', ''done'')),
+                assignee VARCHAR(255),
+                due_date DATE,
+                created_by INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (created_by) REFERENCES %I.users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_tasks_status ON %I.tasks(status);
+        ', schema_name, schema_name, schema_name);
+    END;
+    $$ LANGUAGE plpgsql;
+    
+    SELECT create_tasks_table('tenant_platform');
+    SELECT create_tasks_table('tenant_analytics');
+    DROP FUNCTION IF EXISTS create_tasks_table(TEXT);
+

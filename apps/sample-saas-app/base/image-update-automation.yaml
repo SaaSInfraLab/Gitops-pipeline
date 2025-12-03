@@ -1,0 +1,59 @@
+# Image Update Automation (Optional)
+# 
+# NOTE: When using CI-based image updates (Sample-saas-app CD pipeline),
+# this ImageUpdateAutomation is optional. The CI pipeline directly updates
+# image tags in the GitOps repository.
+#
+# You can use this as an alternative or backup approach for automatic
+# image updates based on ECR scanning.
+#
+# To use this approach instead of CI updates:
+# 1. Ensure ImageRepository has ECR access (IRSA)
+# 2. Apply these resources
+# 3. Remove the update-gitops-manifest job from Sample-saas-app CD workflow
+#
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: sample-saas-app-backend
+  namespace: flux-system
+spec:
+  image: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
+  interval: 1h0m0s
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: sample-saas-app-backend
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: sample-saas-app-backend
+  policy:
+    semver:
+      range: '>=1.0.0'
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageUpdateAutomation
+metadata:
+  name: sample-saas-app
+  namespace: flux-system
+spec:
+  interval: 5m0s
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: fluxcdbot
+        email: fluxcdbot@users.noreply.github.com
+      messageTemplate: |
+        Update image {{range .Updated.Images}}{{println .}}{{end}}
+  update:
+    path: ./apps/sample-saas-app
+    strategy: Setters
+
