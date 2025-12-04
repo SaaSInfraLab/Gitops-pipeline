@@ -17,11 +17,11 @@ commonLabels:
 images:
   - name: task-management-backend
     # Auto-updated by CD pipeline - placeholder format for initial deployment
-    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/PLACEHOLDER_BACKEND_REPO
+    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/placeholder-backend-repo
     newTag: latest  # Auto-updated by CD pipeline
   - name: task-management-frontend
     # Auto-updated by CD pipeline - placeholder format for initial deployment
-    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/PLACEHOLDER_FRONTEND_REPO
+    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/placeholder-frontend-repo
     newTag: latest  # Auto-updated by CD pipeline
 
 patches:
