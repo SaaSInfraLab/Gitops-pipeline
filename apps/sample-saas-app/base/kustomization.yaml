@@ -7,15 +7,23 @@ resources:
   - init-db-job.yaml
 
 commonLabels:
-  app.kubernetes.io/managed-by: flux
+  app.kubernetes.io/managed-by: argocd
   app.kubernetes.io/part-of: sample-saas-app
 
-# Image tags are updated automatically by CI/CD pipeline
-# The CD pipeline in Sample-saas-app updates these tags when new images are built
+# Image configuration - AUTO-UPDATED by CD pipeline
+# The CD pipeline in Sample-saas-app dynamically constructs the ECR image path
+# from AWS account ID and GitHub secrets (ECR_BACKEND_REPO, ECR_FRONTEND_REPO)
+# and updates both newName and newTag automatically on every deployment
+# 
+# These placeholder values will be replaced by the CD pipeline:
+# - newName: Constructed as {AWS_ACCOUNT}.dkr.ecr.{REGION}.amazonaws.com/{ECR_REPO_NAME}
+# - newTag: Extracted from the built image tag (branch name, SHA, or latest)
 images:
   - name: task-management-backend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
-    newTag: latest  # Updated by CI/CD pipeline
+    # Auto-updated by CD pipeline - do not hardcode ECR repository name
+    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/PLACEHOLDER_BACKEND_REPO
+    newTag: latest  # Auto-updated by CD pipeline
   - name: task-management-frontend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
-    newTag: latest  # Updated by CI/CD pipeline
+    # Auto-updated by CD pipeline - do not hardcode ECR repository name
+    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/PLACEHOLDER_FRONTEND_REPO
+    newTag: latest  # Auto-updated by CD pipeline

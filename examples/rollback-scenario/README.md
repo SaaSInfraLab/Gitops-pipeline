@@ -77,7 +77,7 @@ flux events --kind Kustomization --name sample-app
 
 ```bash
 # Navigate to repository
-cd flux-gitops-pipeline
+cd Gitops-pipeline
 
 # Check recent commits
 git log --oneline -10

@@ -1,21 +1,22 @@
-# Flux GitOps Pipeline
+# GitOps Pipeline
 
-![Flux CD](https://img.shields.io/badge/Flux-CD-2C8EBB?style=for-the-badge&logo=fluxcd)
+![Argo CD](https://img.shields.io/badge/Argo-CD-EF7B4D?style=for-the-badge&logo=argo)
 ![Kubernetes](https://img.shields.io/badge/Platform-Kubernetes-326CE5?style=for-the-badge&logo=kubernetes)
 ![GitOps](https://img.shields.io/badge/Methodology-GitOps-success?style=for-the-badge)
 
-> **Production-ready Flux CD GitOps setup** for automated Kubernetes deployments on AWS EKS. Complete solution with reusable templates, deployment strategies, and integration examples.
+> **Production-ready Argo CD GitOps setup** for automated Kubernetes deployments on AWS EKS. Complete solution with reusable templates, deployment strategies, and integration examples.
 
 ## 🎯 Overview
 
-This repository provides a complete Flux CD GitOps pipeline setup for managing Kubernetes deployments on AWS EKS. It includes:
+This repository provides a complete Argo CD GitOps pipeline setup for managing Kubernetes deployments on AWS EKS. It includes:
 
-- ✅ **Complete Flux CD Bootstrap** - Automated installation and configuration
+- ✅ **Complete Argo CD Bootstrap** - Automated installation and configuration
 - ✅ **Application GitOps** - Sample-saas-app deployment via GitOps
 - ✅ **Infrastructure as Code** - Namespace, RBAC, and network policy management
-- ✅ **Reusable Templates** - Helm releases, Kustomize, and Git repository sources
+- ✅ **Reusable Templates** - Application definitions and configurations
 - ✅ **Deployment Strategies** - Blue-green, canary, and rollback examples
 - ✅ **Multi-Tenant Support** - Integration with existing multi-tenant infrastructure
+- ✅ **Web UI** - Full-featured Argo CD UI for application management
 
 ## 🏗️ Architecture
 
@@ -29,19 +30,19 @@ This repository provides a complete Flux CD GitOps pipeline setup for managing K
                │ (Git commit with new image tags)
                ▼
 ┌─────────────────────────────────────┐
-│  flux-gitops-pipeline (GitHub)      │
+│  Gitops-pipeline (GitHub)      │
 │  - Kubernetes Manifests             │
 │  - Kustomize Base + Overlays        │
 │  - Multi-tenant Configurations      │
 └──────────────┬──────────────────────┘
                │
-               │ (Flux watches Git)
+               │ (Argo CD watches Git)
                ▼
 ┌──────────────────────────────────────┐
-│  Flux CD (EKS Cluster)               │
-│  - source-controller                 │
-│  - kustomize-controller              │
-│  - image-automation-controller       │
+│  Argo CD (EKS Cluster)               │
+│  - application-controller            │
+│  - repo-server                       │
+│  - server (Web UI)                   │
 └──────────────┬───────────────────────┘
                │
                ▼
@@ -60,59 +61,68 @@ This repository provides a complete Flux CD GitOps pipeline setup for managing K
 
 - AWS EKS cluster (created via `cloudnative-saas-eks`)
 - `kubectl` configured to access your cluster
-- `flux` CLI installed (or use the bootstrap script)
 - Git repository access (GitHub, GitLab, etc.)
 
-### Bootstrap Flux CD
+### Install Argo CD
 
 ```bash
 # Navigate to bootstrap directory
-cd bootstrap
+cd argocd/bootstrap
 
-# Run the bootstrap script
-./install.sh
+# Run the installation script
+./install-argocd.sh
+```
 
-# Or manually bootstrap Flux
-flux bootstrap github \
-  --owner=SaaSInfraLab \
-  --repository=flux-gitops-pipeline \
-  --branch=main \
-  --path=clusters/dev-environment
+### Access Argo CD UI
+
+```bash
+# Port-forward Argo CD server
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# Open browser: https://localhost:8080
+# Username: admin
+# Password: (from install script output)
+```
+
+### Deploy Applications
+
+```bash
+# Deploy using App of Apps pattern
+kubectl apply -f argocd/app-of-apps.yaml
 ```
 
 ### Verify Installation
 
 ```bash
-# Check Flux components
-kubectl get pods -n flux-system
+# Check Argo CD components
+kubectl get pods -n argocd
 
-# Check Git repository sync
-flux get sources git
+# Check applications
+kubectl get applications -n argocd
 
-# Check application sync
-flux get kustomizations
+# Or use Argo CD CLI
+argocd app list
 ```
+
+> **📚 For detailed instructions, see [Argo CD README](ARGOCD_README.md)**
 
 ## 📁 Repository Structure
 
 ```
-flux-gitops-pipeline/
+Gitops-pipeline/
 ├── README.md                          # This file
-├── bootstrap/                         # Flux CD bootstrap configuration
-│   ├── flux-system/                   # Flux system namespace
-│   │   ├── gotk-components.yaml       # Flux components
-│   │   ├── gotk-sync.yaml             # Sync configuration
-│   │   └── kustomization.yaml
-│   └── install.sh                     # Bootstrap script
-├── clusters/                          # Cluster-specific configs
-│   └── dev-environment/               # Dev cluster config
-│       ├── flux-system/               # Flux system config
-│       ├── apps/                      # Application deployments
-│       │   ├── sample-saas-app/       # Main app reference
-│       │   ├── sample-saas-app-platform/  # Platform tenant
-│       │   ├── sample-saas-app-analytics/ # Analytics tenant
-│       │   └── monitoring-stack/      # Monitoring stack config
-│       └── infrastructure/            # Infrastructure configs
+├── ARGOCD_README.md                   # Argo CD documentation
+├── argocd/                            # Argo CD configuration
+│   ├── applications/                 # Application definitions
+│   │   ├── sample-saas-app-platform.yaml
+│   │   ├── sample-saas-app-analytics.yaml
+│   │   ├── monitoring-stack.yaml
+│   │   └── infrastructure.yaml
+│   ├── app-of-apps.yaml              # App of Apps pattern
+│   └── bootstrap/                    # Bootstrap scripts
+│       ├── install-argocd.sh
+│       └── README.md
+├── apps/                              # Application manifests
 ├── apps/                              # Application definitions
 │   └── sample-saas-app/               # Sample SaaS app
 │       ├── base/                      # Base Kustomize config
@@ -145,24 +155,28 @@ flux-gitops-pipeline/
 │   ├── blue-green-deployment/        # Blue-green deployment example
 │   ├── canary-deployment/            # Canary deployment example
 │   └── rollback-scenario/            # Rollback scenario example
-└── docs/                              # Documentation
-    ├── getting-started.md
-    ├── integration-guide.md
-    ├── gitops-integration-summary.md  # GitOps integration details
-    └── troubleshooting.md
+└── docs/                              # Documentation (see ARGOCD_README.md for details)
 ```
 
 ## 🔧 Key Components
 
-### Flux CD Bootstrap
+### Argo CD Applications
 
-The bootstrap process installs Flux CD components and configures Git repository synchronization:
+Applications are defined using Argo CD Application CRDs:
 
-- **source-controller**: Manages Git and Helm repository sources
-- **kustomize-controller**: Applies Kustomize overlays
-- **helm-controller**: Manages Helm releases
-- **image-reflector-controller**: Scans container image repositories
-- **image-automation-controller**: Updates Git based on image changes
+- **sample-saas-app-platform**: Platform tenant deployment
+- **sample-saas-app-analytics**: Analytics tenant deployment
+- **monitoring-stack**: Prometheus/Grafana monitoring
+- **infrastructure**: Cluster-wide infrastructure resources
+
+### Argo CD Bootstrap
+
+The bootstrap process installs Argo CD components:
+
+- **application-controller**: Manages application lifecycle and sync
+- **repo-server**: Handles Git repository operations
+- **server**: Web UI and API server
+- **dex**: Authentication server (optional)
 
 ### Application Definitions
 
@@ -184,10 +198,8 @@ Infrastructure resources managed via GitOps:
 
 ## 📚 Documentation
 
-- [Getting Started Guide](docs/getting-started.md) - Detailed installation and setup
-- [Integration Guide](docs/integration-guide.md) - Integration with cloudnative-saas-eks
-- [GitOps Integration Summary](docs/gitops-integration-summary.md) - Complete CI/CD → GitOps workflow
-- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
+- [Argo CD README](ARGOCD_README.md) - Complete Argo CD guide and documentation
+- [Bootstrap Guide](argocd/bootstrap/README.md) - Detailed installation and setup instructions
 
 ## 🔗 Integration
 
@@ -215,9 +227,9 @@ Fully GitOps deployment of the [Sample-saas-app](https://github.com/SaaSInfraLab
    - Pushes images to ECR with tags (sha, latest, branch)
    - Updates this GitOps repository with new image tags
    ↓
-4. Flux CD detects Git repository changes
+4. Argo CD detects Git repository changes (via webhook or polling)
    ↓
-5. Flux automatically syncs and deploys to cluster
+5. Argo CD automatically syncs and deploys to cluster
    - Platform tenant namespace
    - Analytics tenant namespace
 ```
@@ -226,7 +238,7 @@ Fully GitOps deployment of the [Sample-saas-app](https://github.com/SaaSInfraLab
 - ✅ **Fully GitOps**: No kubectl in CI/CD, all deployments via Git
 - ✅ **Multi-Tenant**: Separate deployments for platform and analytics tenants
 - ✅ **Automatic Updates**: CI/CD automatically updates image tags in Git
-- ✅ **Image Automation**: Flux ImageUpdateAutomation for automated image scanning
+- ✅ **Web UI**: Visual application management via Argo CD UI
 - ✅ **Secrets Management**: Platform tenant uses AWS Secrets Manager via IRSA
 - ✅ **Environment Isolation**: Tenant-specific namespaces and configurations
 
@@ -252,7 +264,7 @@ For the CI/CD → GitOps integration to work, configure these secrets in the **S
 **Setup Instructions:**
 1. Create a GitHub Personal Access Token (PAT) with `repo` scope
 2. Add it as `GITOPS_REPO_TOKEN` secret in Sample-saas-app repository
-3. Ensure the token has write access to `flux-gitops-pipeline` repository
+3. Ensure the token has write access to `Gitops-pipeline` repository
 
 ## 🎯 Use Cases
 
@@ -267,8 +279,8 @@ git push origin main
 
 # CI/CD automatically:
 # 1. Builds and pushes images to ECR
-# 2. Updates flux-gitops-pipeline Git repo with new tags
-# 3. Flux detects changes and deploys to cluster
+# 2. Updates Gitops-pipeline Git repo with new tags
+# 3. Argo CD detects changes and deploys to cluster
 ```
 
 ### Manual GitOps Updates
@@ -280,7 +292,7 @@ Manually update application configurations:
 git commit -am "Update application configuration"
 git push
 
-# Flux automatically syncs and deploys
+# Argo CD automatically syncs and deploys
 ```
 
 ### Multi-Tenant Management
@@ -289,10 +301,10 @@ Manage multiple tenants (platform, analytics) with Kustomize overlays:
 
 ```bash
 # Check platform tenant deployment
-flux get kustomizations sample-saas-app-platform
+argocd app get sample-saas-app-platform
 
 # Check analytics tenant deployment
-flux get kustomizations sample-saas-app-analytics
+argocd app get sample-saas-app-analytics
 
 # View tenant-specific resources
 kubectl get all -n platform
@@ -315,48 +327,40 @@ kubectl apply -k apps/sample-saas-app/overlays/prod
 
 Two methods for updating container images:
 
-**Method 1: CI/CD Pipeline Updates (Current Implementation)**
+**CI/CD Pipeline Updates (Current Implementation)**
 - Sample-saas-app CD pipeline builds images and updates GitOps repo
 - Updates image tags in `base/kustomization.yaml` and overlay files
-- Flux detects Git changes and deploys automatically
+- Argo CD detects Git changes and deploys automatically
 
-**Method 2: Flux ImageUpdateAutomation (Optional)**
-- Automatically scans ECR for new images
+**Optional: Argo CD Image Updater**
+- Can be configured separately for automated image scanning
 - Updates Git repository with new tags
-- Configured in `apps/sample-saas-app/base/image-update-automation.yaml`:
-
-```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta2
-kind: ImageUpdateAutomation
-metadata:
-  name: sample-saas-app
-spec:
-  update:
-    path: ./apps/sample-saas-app
-    strategy: Setters
-```
+- See [Argo CD Image Updater documentation](https://argocd-image-updater.readthedocs.io/)
 
 ## 🛡️ Security Best Practices
 
 - **Git Authentication**: Use SSH keys or deploy keys for Git access
 - **IRSA**: IAM Roles for Service Accounts for AWS resource access
 - **Secrets Management**: Integrate with AWS Secrets Manager
-- **RBAC**: Fine-grained access control for Flux components
+- **RBAC**: Fine-grained access control for Argo CD
 - **Network Policies**: Restrict pod-to-pod communication
 
 ## 📊 Monitoring
 
-Flux CD provides built-in observability:
+Argo CD provides built-in observability:
 
 ```bash
-# Check sync status
-flux get kustomizations
+# Check application status
+argocd app list
 
-# View events
-flux events
+# View application health
+argocd app get sample-saas-app-platform
 
-# Check logs
-kubectl logs -n flux-system -l app=source-controller
+# Check sync history
+argocd app history sample-saas-app-platform
+
+# View application logs
+kubectl logs -n argocd -l app.kubernetes.io/name=argocd-application-controller
 ```
 
 ## 🤝 Contributing
@@ -382,8 +386,9 @@ This project is licensed under the MIT License.
 For issues and questions:
 
 - Open an issue on GitHub
-- Check the [troubleshooting guide](docs/troubleshooting.md)
-- Review the [Flux CD documentation](https://fluxcd.io/docs/)
+- Check the [bootstrap guide](argocd/bootstrap/README.md)
+- Review the [Argo CD documentation](https://argo-cd.readthedocs.io/)
+- See [Argo CD README](ARGOCD_README.md) for complete documentation
 
 ---
 

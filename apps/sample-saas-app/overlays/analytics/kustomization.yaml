@@ -11,13 +11,21 @@ commonLabels:
   environment: dev
   app.kubernetes.io/managed-by: flux
 
+# Image configuration - AUTO-UPDATED by CD pipeline
+# These values are dynamically updated by the CD pipeline from GitHub secrets
+# Do not hardcode ECR repository names - they are constructed from:
+# - AWS account ID (from AWS API)
+# - AWS region (from workflow env)
+# - ECR repository names (from GitHub secrets: ECR_BACKEND_REPO, ECR_FRONTEND_REPO)
 images:
   - name: task-management-backend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
-    newTag: latest
+    # Auto-updated by CD pipeline - placeholder format for initial deployment
+    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/PLACEHOLDER_BACKEND_REPO
+    newTag: latest  # Auto-updated by CD pipeline
   - name: task-management-frontend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
-    newTag: latest
+    # Auto-updated by CD pipeline - placeholder format for initial deployment
+    newName: 000000000000.dkr.ecr.us-east-1.amazonaws.com/PLACEHOLDER_FRONTEND_REPO
+    newTag: latest  # Auto-updated by CD pipeline
 
 patches:
   - patch: |-
