@@ -1,14 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: platform
-
 resources:
   - ../../base
   - namespace.yaml
   - aws-secrets-manager.yaml
   - secret-sync-job.yaml
-
 commonLabels:
   tenant: platform
   environment: dev
@@ -73,4 +70,3 @@ patches:
     target:
       kind: Service
       name: frontend-service
-
