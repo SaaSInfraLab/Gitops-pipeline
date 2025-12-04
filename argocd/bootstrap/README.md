@@ -6,7 +6,7 @@ Complete guide to bootstrap Argo CD on your EKS cluster and migrate from Flux CD
 
 - ✅ EKS cluster deployed and accessible
 - ✅ `kubectl` configured to access your cluster
-- ✅ GitHub repository: `SaaSInfraLab/gitops-pipeline`
+- ✅ GitHub repository: `SaaSInfraLab/Gitops-pipeline`
 - ✅ Write access to the repository (for webhook configuration)
 
 ## Quick Start
@@ -158,7 +158,7 @@ Argo CD needs access to your Git repository. By default, it uses anonymous acces
 4. Update Application to use SSH:
    ```yaml
    source:
-     repoURL: git@github.com:SaaSInfraLab/gitops-pipeline.git
+     repoURL: git@github.com:SaaSInfraLab/Gitops-pipeline.git
      sshPrivateKeySecret:
        name: argocd-repo-credentials
        key: sshPrivateKey
@@ -172,7 +172,7 @@ Argo CD needs access to your Git repository. By default, it uses anonymous acces
    ```bash
    kubectl create secret generic argocd-repo-credentials \
      --from-literal=type=git \
-     --from-literal=url=https://github.com/SaaSInfraLab/gitops-pipeline \
+     --from-literal=url=https://github.com/SaaSInfraLab/Gitops-pipeline \
      --from-literal=password=<your-token> \
      -n argocd
    ```
@@ -180,7 +180,7 @@ Argo CD needs access to your Git repository. By default, it uses anonymous acces
 3. Update Application to use HTTPS:
    ```yaml
    source:
-     repoURL: https://github.com/SaaSInfraLab/gitops-pipeline
+     repoURL: https://github.com/SaaSInfraLab/Gitops-pipeline
      # Argo CD will automatically use the secret
    ```
 
@@ -231,12 +231,12 @@ argocd repo list
 
 ```bash
 # Test repository access
-argocd repo add https://github.com/SaaSInfraLab/gitops-pipeline \
+argocd repo add https://github.com/SaaSInfraLab/Gitops-pipeline \
   --username <username> \
   --password <token>
 
 # Or for SSH
-argocd repo add git@github.com:SaaSInfraLab/gitops-pipeline \
+argocd repo add git@github.com:SaaSInfraLab/Gitops-pipeline \
   --ssh-private-key-path ~/.ssh/id_rsa
 ```
 
