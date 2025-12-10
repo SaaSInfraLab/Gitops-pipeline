@@ -1,10 +1,9 @@
 name: Auto-Apply Infrastructure
 
 on:
-  # Triggered when cloudnative-saas-eks repository dispatches an event
+
   repository_dispatch:
     types: [infrastructure-changed]
-  # Manual trigger
   workflow_dispatch:
     inputs:
       environment:

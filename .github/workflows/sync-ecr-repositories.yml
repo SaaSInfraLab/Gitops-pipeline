@@ -6,7 +6,7 @@ on:
     # Run daily at 3 AM UTC to ensure ECR repository names are up to date
     - cron: '0 3 * * *'
   push:
-    branches: [main, develop]
+    branches: [main, develop, testing]
     paths:
       - '.github/workflows/sync-ecr-repositories.yml'
 

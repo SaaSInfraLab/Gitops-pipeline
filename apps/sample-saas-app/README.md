@@ -221,8 +221,6 @@ kubectl patch application sample-saas-app-platform -n argocd --type merge -p '{"
 
 ## Related Documentation
 
-- [GitOps Pipeline README](../../README.md)
-- [Platform Overlay README](overlays/platform/README.md)
-- [Infrastructure README](../../INFRASTRUCTURE_README.md)
-- [Monitoring Stack README](../../MONITORING_STACK_README.md)
-- [Sample-saas-app Repository](https://github.com/SaaSInfraLab/Sample-saas-app)
+- [GitOps Pipeline README](../../README.md) - Main repository documentation
+- [Platform Overlay README](overlays/platform/README.md) - Platform tenant setup
+- [Sample-saas-app Repository](https://github.com/SaaSInfraLab/Sample-saas-app) - Application source code

@@ -1,444 +1,318 @@
-# GitOps Pipeline
+# GitOps Pipeline - Automation Layer
 
 ![Argo CD](https://img.shields.io/badge/Argo-CD-EF7B4D?style=for-the-badge&logo=argo)
 ![Kubernetes](https://img.shields.io/badge/Platform-Kubernetes-326CE5?style=for-the-badge&logo=kubernetes)
 ![GitOps](https://img.shields.io/badge/Methodology-GitOps-success?style=for-the-badge)
 
-> **Production-ready Argo CD GitOps setup** for automated Kubernetes deployments on AWS EKS. Complete solution with reusable templates, deployment strategies, and integration examples.
+> **Automation layer for deploying infrastructure and applications** to AWS EKS using Argo CD GitOps. This repository watches `cloudnative-saas-eks` for infrastructure changes and manages application deployments via GitOps.
 
-## 🎯 Overview
+## 🎯 What Is This Repository?
 
-This repository provides a complete Argo CD GitOps pipeline setup for managing Kubernetes deployments on AWS EKS. It includes:
+This is the **automation layer** that:
+- ✅ **Watches** `cloudnative-saas-eks` repository for infrastructure configuration changes
+- ✅ **Deploys** infrastructure via Terraform using GitHub Actions
+- ✅ **Manages** Kubernetes applications via Argo CD GitOps
+- ✅ **Automates** the complete CI/CD → GitOps workflow
 
-- ✅ **Complete Argo CD Bootstrap** - Automated installation and configuration
-- ✅ **Application GitOps** - Sample-saas-app deployment via GitOps
-- ✅ **Infrastructure as Code** - Namespace, RBAC, and network policy management
-- ✅ **Reusable Templates** - Application definitions and configurations
-- ✅ **Deployment Strategies** - Blue-green, canary, and rollback examples
-- ✅ **Multi-Tenant Support** - Integration with existing multi-tenant infrastructure
-- ✅ **Web UI** - Full-featured Argo CD UI for application management
+**Key Principle**: This repository is **pure automation** - all configuration comes from `cloudnative-saas-eks`.
 
-## 🏗️ Architecture
+## 🏗️ Where Does It Help?
+
+### Architecture Flow
 
 ```
-┌─────────────────────────────────────┐
-│  Sample-saas-app (GitHub)            │
-│  - CI: Tests & Validation            │
-│  - CD: Build Images → Update GitOps  │
-└──────────────┬───────────────────────┘
+┌─────────────────────────────────────────┐
+│  cloudnative-saas-eks                   │
+│  (Single Source of Truth)               │
+│  - Configuration files (tfvars)         │
+│  - Terraform code                       │
+└──────────────┬──────────────────────────┘
                │
-               │ (Git commit with new image tags)
+               │ (GitHub Actions watches)
                ▼
-┌─────────────────────────────────────┐
-│  Gitops-pipeline (GitHub)      │
-│  - Kubernetes Manifests             │
-│  - Kustomize Base + Overlays        │
-│  - Multi-tenant Configurations      │
-└──────────────┬──────────────────────┘
+┌─────────────────────────────────────────┐
+│  Gitops-pipeline (This Repo)            │
+│  - GitHub Actions workflows             │
+│  - Terraform deployment scripts         │
+│  - Argo CD application definitions      │
+│  - Kubernetes manifests                 │
+└──────────────┬──────────────────────────┘
                │
-               │ (Argo CD watches Git)
+               │ (Deploys to)
                ▼
-┌──────────────────────────────────────┐
-│  Argo CD (EKS Cluster)               │
-│  - application-controller            │
-│  - repo-server                       │
-│  - server (Web UI)                   │
-└──────────────┬───────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────┐
-│  Kubernetes Cluster (EKS)            │
-│  ├── platform namespace              │
-│  ├── analytics namespace             │
-│  ├── Infrastructure (RBAC, Network)  │
-│  └── Monitoring Stack                │
-└──────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  AWS EKS Cluster                        │
+│  - Infrastructure (VPC, EKS, RDS)       │
+│  - Applications (Sample-saas-app)       │
+│  - Monitoring (Prometheus/Grafana)      │
+└─────────────────────────────────────────┘
 ```
 
-## 🚀 Quick Start
+### Integration Points
+
+1. **With cloudnative-saas-eks**:
+   - Watches for configuration changes
+   - Deploys infrastructure automatically
+   - Captures Terraform outputs
+
+2. **With Sample-saas-app**:
+   - Receives Docker image updates
+   - Deploys applications via Argo CD
+   - Manages multi-tenant deployments
+
+3. **With AWS EKS**:
+   - Deploys infrastructure via Terraform
+   - Manages applications via Argo CD
+   - Integrates with AWS Secrets Manager
+
+## 🚀 How to Use It
 
 ### Prerequisites
 
-- AWS EKS cluster (created via `cloudnative-saas-eks`)
-- `kubectl` configured to access your cluster
-- Git repository access (GitHub, GitLab, etc.)
-- GitHub Actions secrets configured (see [SECRETS_SETUP.md](SECRETS_SETUP.md))
+- AWS EKS cluster (or will be created by this pipeline)
+- GitHub repository with Actions enabled
+- AWS credentials configured (via secrets or OIDC)
 
-### Install Argo CD
+### Step 1: Configure GitHub Secrets
+
+Add these secrets to this repository (**Settings → Secrets and variables → Actions**):
+
+| Secret Name | Description | How to Get |
+|------------|-------------|------------|
+| `AWS_ACCESS_KEY_ID` | AWS access key for Terraform | AWS IAM → Create access key |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key for Terraform | AWS IAM → Create access key |
+| `ECR_BACKEND_REPO` | ECR repository name for backend | From Terraform: `terraform output ecr_backend_repository_name` |
+| `ECR_FRONTEND_REPO` | ECR repository name for frontend | From Terraform: `terraform output ecr_frontend_repository_name` |
+| `AWS_ROLE_ARN` | (Optional) IAM role for OIDC | From Terraform outputs or AWS Console |
+
+### Step 2: Deploy Infrastructure
+
+**Option A: Automated (Recommended)**
+1. Push changes to `cloudnative-saas-eks` repository
+2. GitHub Actions in this repo watches and deploys automatically
+
+**Option B: Manual Trigger**
+1. Go to **Actions → "Auto-Apply Infrastructure"**
+2. Click **"Run workflow"**
+3. Select environment: `dev`
+4. Click **"Run workflow"**
+
+### Step 3: Install Argo CD
 
 ```bash
 # Navigate to bootstrap directory
 cd argocd/bootstrap
 
-# Run the installation script
+# Run installation script
 ./install-argocd.sh
-```
 
-### Access Argo CD UI
+# Get admin password
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
-```bash
-# Port-forward Argo CD server
+# Port-forward Argo CD UI
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 
-# Open browser: https://localhost:8080
+# Access: https://localhost:8080
 # Username: admin
-# Password: (from install script output)
+# Password: (from above)
 ```
 
-### Configure GitHub Secrets
-
-Before deploying, configure GitHub Actions secrets in this repository:
-
-1. Go to **Settings → Secrets and variables → Actions**
-2. Add the following secrets (see [SECRETS_SETUP.md](SECRETS_SETUP.md) for details):
-   - `AWS_ROLE_ARN` - IAM role for AWS access
-   - `ECR_BACKEND_REPO` - Backend ECR repository name
-   - `ECR_FRONTEND_REPO` - Frontend ECR repository name
-
-3. Run the sync workflow to update kustomization files:
-   - Go to **Actions → "Sync ECR Repository Names" → Run workflow**
-
-### Deploy Applications
+### Step 4: Deploy Applications
 
 ```bash
 # Deploy using App of Apps pattern
 kubectl apply -f argocd/app-of-apps.yaml
-```
 
-### Verify Installation
-
-```bash
-# Check Argo CD components
-kubectl get pods -n argocd
-
-# Check applications
+# Verify applications
 kubectl get applications -n argocd
-
-# Or use Argo CD CLI
 argocd app list
 ```
-
-> **📚 For detailed instructions, see [Argo CD README](ARGOCD_README.md)**
 
 ## 📁 Repository Structure
 
 ```
 Gitops-pipeline/
-├── README.md                          # This file
-├── ARGOCD_README.md                   # Argo CD documentation
-├── argocd/                            # Argo CD configuration
-│   ├── applications/                 # Application definitions
+├── README.md                    # This file
+├── .github/workflows/           # GitHub Actions workflows
+│   ├── auto-apply-infra.yml     # Infrastructure deployment
+│   ├── sync-ecr-repositories.yml # ECR repo name sync
+│   └── destroy-infra.yml        # Infrastructure cleanup
+├── scripts/                      # Deployment scripts
+│   ├── deploy.sh                # Deploy infrastructure
+│   ├── destroy.sh               # Destroy infrastructure
+│   └── capture-outputs.sh       # Capture Terraform outputs
+├── argocd/                       # Argo CD configuration
+│   ├── app-of-apps.yaml         # App of Apps pattern
+│   ├── applications/             # Application definitions
+│   │   ├── infrastructure.yaml  # Infrastructure app
+│   │   ├── monitoring-stack.yaml # Monitoring app
 │   │   ├── sample-saas-app-platform.yaml
-│   │   ├── sample-saas-app-analytics.yaml
-│   │   ├── monitoring-stack.yaml
-│   │   └── infrastructure.yaml
-│   ├── app-of-apps.yaml              # App of Apps pattern
-│   └── bootstrap/                    # Bootstrap scripts
-│       ├── install-argocd.sh
-│       └── README.md
-├── apps/                              # Application manifests
-├── apps/                              # Application definitions
-│   └── sample-saas-app/               # Sample SaaS app
-│       ├── base/                      # Base Kustomize config
-│       │   ├── backend-deployment.yaml
-│       │   ├── frontend-deployment.yaml
-│       │   ├── init-db-job.yaml
-│       │   ├── image-repository.yaml
-│       │   ├── image-update-automation.yaml
-│       │   └── kustomization.yaml
-│       └── overlays/                 # Tenant-specific overlays
-│           ├── platform/             # Platform tenant overlay
-│           │   ├── namespace.yaml
-│           │   ├── aws-secrets-manager.yaml
-│           │   ├── secret-sync-job.yaml
-│           │   └── kustomization.yaml
-│           ├── analytics/            # Analytics tenant overlay
-│           │   ├── namespace.yaml
-│           │   └── kustomization.yaml
-│           ├── dev/                  # Dev environment overlay
-│           └── prod/                 # Prod environment overlay
-├── infrastructure/                   # Infrastructure components
-│   ├── namespaces/                   # Namespace definitions
-│   ├── network-policies/             # Network policy configs
-│   └── rbac/                         # RBAC configurations
-├── templates/                        # Reusable templates
-│   ├── helm-release-template.yaml
-│   ├── kustomization-template.yaml
-│   └── git-repository-template.yaml
-├── examples/                          # Deployment strategy examples
-│   ├── blue-green-deployment/        # Blue-green deployment example
-│   ├── canary-deployment/            # Canary deployment example
-│   └── rollback-scenario/            # Rollback scenario example
-└── docs/                              # Documentation (see ARGOCD_README.md for details)
+│   │   └── sample-saas-app-analytics.yaml
+│   └── bootstrap/               # Argo CD installation
+│       └── install-argocd.sh
+├── apps/                         # Application manifests
+│   └── sample-saas-app/         # Sample SaaS app
+│       ├── base/                 # Base Kustomize config
+│       └── overlays/             # Tenant overlays
+│           ├── platform/        # Platform tenant
+│           └── analytics/       # Analytics tenant
+├── infrastructure/               # Infrastructure resources
+│   ├── namespaces/               # Namespace definitions
+│   ├── network-policies/         # Network policies
+│   └── rbac/                     # RBAC configurations
+└── examples/                     # Deployment examples
+    ├── blue-green-deployment/
+    ├── canary-deployment/
+    └── rollback-scenario/
 ```
 
 ## 🔧 Key Components
 
-### Argo CD Applications
+### 1. Infrastructure Deployment
 
-Applications are defined using Argo CD Application CRDs:
+**What it does:**
+- Watches `cloudnative-saas-eks` for configuration changes
+- Deploys infrastructure via Terraform (VPC, EKS, RDS, ECR)
+- Captures Terraform outputs to `infra_version.yaml`
 
-- **sample-saas-app-platform**: Platform tenant deployment with AWS Secrets Manager integration
-- **sample-saas-app-analytics**: Analytics tenant deployment with resource limits
-- **monitoring-stack**: Prometheus/Grafana/Alertmanager monitoring stack
-- **infrastructure**: Cluster-wide infrastructure (namespaces, RBAC, network policies)
+**Workflow:** `.github/workflows/auto-apply-infra.yml`
 
-See [INFRASTRUCTURE_README.md](INFRASTRUCTURE_README.md) and [MONITORING_STACK_README.md](MONITORING_STACK_README.md) for detailed information.
+**How to use:**
+- Push changes to `cloudnative-saas-eks` → Auto-deploys
+- Or manually trigger: **Actions → "Auto-Apply Infrastructure"**
 
-### Argo CD Bootstrap
+### 2. Argo CD Applications
 
-The bootstrap process installs Argo CD components:
+**What it does:**
+- Manages Kubernetes applications via GitOps
+- Automatically syncs when Git changes
+- Provides web UI for application management
 
-- **application-controller**: Manages application lifecycle and sync
-- **repo-server**: Handles Git repository operations
-- **server**: Web UI and API server
-- **dex**: Authentication server (optional)
+**Applications:**
+- **infrastructure**: Namespaces, network policies, RBAC
+- **monitoring-stack**: Prometheus, Grafana, Alertmanager
+- **sample-saas-app-platform**: Platform tenant deployment
+- **sample-saas-app-analytics**: Analytics tenant deployment
 
-### Application Definitions
+**How to use:**
+```bash
+# Deploy all applications
+kubectl apply -f argocd/app-of-apps.yaml
 
-Applications are defined using Kustomize overlays for multi-tenant and environment-specific configurations:
+# Check status
+argocd app list
+argocd app get sample-saas-app-platform
+```
 
-- **Base**: Common configuration shared across all tenants (deployments, services, init jobs)
-- **Overlays**: Tenant-specific customizations:
-  - **platform**: Production tenant with AWS Secrets Manager integration
-  - **analytics**: Analytics tenant with resource limits
-  - **dev/prod**: Environment-specific overlays (optional)
+### 3. ECR Repository Sync
 
-### Infrastructure Components
+**What it does:**
+- Syncs ECR repository names from GitHub secrets
+- Updates kustomization files with correct ECR paths
+- Runs automatically or on manual trigger
 
-Infrastructure resources managed via GitOps:
+**Workflow:** `.github/workflows/sync-ecr-repositories.yml`
 
-- **Namespaces**: Multi-tenant namespace definitions (platform, analytics, data, monitoring)
-- **Network Policies**: Pod-to-pod communication rules (default-deny for security)
-- **RBAC**: Role-based access control configurations (add your roles here)
+**How to use:**
+1. Add `ECR_BACKEND_REPO` and `ECR_FRONTEND_REPO` secrets
+2. Go to **Actions → "Sync ECR Repository Names" → Run workflow**
 
-**What Infrastructure Does:**
-- Creates and manages tenant namespaces before applications deploy
-- Applies network security policies (zero-trust model)
-- Manages RBAC for applications and services
-- Ensures proper namespace labels and organization
+### 4. Application Manifests
 
-See [INFRASTRUCTURE_README.md](INFRASTRUCTURE_README.md) for details.
+**What it does:**
+- Defines Kubernetes deployments, services, configmaps
+- Uses Kustomize for multi-tenant overlays
+- Supports platform and analytics tenants
 
-### Monitoring Stack
+**Structure:**
+- `apps/sample-saas-app/base/`: Common configuration
+- `apps/sample-saas-app/overlays/platform/`: Platform tenant
+- `apps/sample-saas-app/overlays/analytics/`: Analytics tenant
 
-The monitoring stack provides:
-- **Prometheus**: Metrics collection and storage
-- **Grafana**: Visualization dashboards
-- **Alertmanager**: Alert routing and notifications
-- **ServiceMonitors**: Automatic metric scraping from applications
+## 🔄 Complete CI/CD Flow
 
-**What Monitoring Stack Does:**
-- Collects cluster and application metrics
-- Provides pre-configured dashboards for Kubernetes and applications
-- Sends alerts for cluster health, node issues, and pod failures
-- Integrates with applications via ServiceMonitors
-
-See [MONITORING_STACK_README.md](MONITORING_STACK_README.md) for details.
-
-## 📚 Documentation
-
-- [Argo CD README](ARGOCD_README.md) - Complete Argo CD guide and documentation
-- [Bootstrap Guide](argocd/bootstrap/README.md) - Detailed installation and setup instructions
-- [Infrastructure README](INFRASTRUCTURE_README.md) - Infrastructure components explained
-- [Monitoring Stack README](MONITORING_STACK_README.md) - Monitoring setup and usage
-- [Secrets Setup](SECRETS_SETUP.md) - GitHub Actions secrets configuration
-
-## 🔗 Integration
-
-### With cloudnative-saas-eks
-
-This repository integrates seamlessly with the [cloudnative-saas-eks](https://github.com/SaaSInfraLab/cloudnative-saas-eks) infrastructure:
-
-- Deploys to EKS clusters created by Terraform
-- Uses existing namespaces (platform, analytics, data)
-- Integrates with AWS Secrets Manager via IRSA
-- Supports multi-tenant deployments
-
-### With Sample-saas-app
-
-Fully GitOps deployment of the [Sample-saas-app](https://github.com/SaaSInfraLab/Sample-saas-app):
-
-**Complete CI/CD → GitOps Workflow:**
 ```
 1. Developer pushes code to Sample-saas-app
    ↓
-2. CI pipeline (Sample-saas-app) runs tests and validation
+2. CI pipeline runs (tests, validation)
    ↓
-3. CD pipeline (Sample-saas-app) triggers:
-   - Builds Docker images (backend + frontend)
-   - Pushes images to ECR with tags (sha, latest, branch)
-   - Updates this GitOps repository with new image tags
+3. CD pipeline builds Docker images
    ↓
-4. Argo CD detects Git repository changes (via webhook or polling)
+4. Images pushed to ECR
    ↓
-5. Argo CD automatically syncs and deploys to cluster
-   - Platform tenant namespace
-   - Analytics tenant namespace
+5. CD pipeline updates Gitops-pipeline with new image tags
+   ↓
+6. Argo CD detects Git changes
+   ↓
+7. Argo CD automatically deploys to EKS cluster
+   ↓
+8. Applications running in platform/analytics namespaces
 ```
 
-**Key Features:**
-- ✅ **Fully GitOps**: No kubectl in CI/CD, all deployments via Git
-- ✅ **Multi-Tenant**: Separate deployments for platform and analytics tenants
-- ✅ **Automatic Updates**: CI/CD automatically updates image tags in Git
-- ✅ **Web UI**: Visual application management via Argo CD UI
-- ✅ **Secrets Management**: Platform tenant uses AWS Secrets Manager via IRSA
-- ✅ **Environment Isolation**: Tenant-specific namespaces and configurations
+## 📚 Quick Reference
 
-**Configuration:**
-- Base manifests in `apps/sample-saas-app/base/`
-- Platform overlay: `apps/sample-saas-app/overlays/platform/` (with AWS Secrets Manager)
-- Analytics overlay: `apps/sample-saas-app/overlays/analytics/` (with resource limits)
-- Cluster Kustomizations: `clusters/dev-environment/apps/sample-saas-app-*/`
-
-**Platform vs Analytics:**
-- **Platform**: Uses AWS Secrets Manager for RDS credentials via IRSA (IAM Roles for Service Accounts)
-- **Analytics**: Uses standard Kubernetes secrets, optimized for analytics workloads with resource limits
-- Both share the same base application code but have different configurations
-
-See [GitOps Integration Summary](docs/gitops-integration-summary.md) for detailed workflow documentation.
-
-### Required GitHub Secrets
-
-For the CI/CD → GitOps integration to work, configure these secrets in the **Sample-saas-app** repository:
-
-| Secret Name | Description | Required For |
-|------------|-------------|--------------|
-| `AWS_ROLE_ARN` | IAM role ARN for ECR access | Building and pushing images |
-| `ECR_BACKEND_REPO` | ECR repository name for backend | Backend image push |
-| `ECR_FRONTEND_REPO` | ECR repository name for frontend | Frontend image push |
-| `GITOPS_REPO_TOKEN` | GitHub Personal Access Token with `repo` scope | Updating GitOps repository |
-
-**Setup Instructions:**
-1. Create a GitHub Personal Access Token (PAT) with `repo` scope
-2. Add it as `GITOPS_REPO_TOKEN` secret in Sample-saas-app repository
-3. Ensure the token has write access to `Gitops-pipeline` repository
-
-## 🎯 Use Cases
-
-### Continuous Deployment via GitOps
-
-Automatically deploy applications when CI/CD updates Git:
-
+### Deploy Infrastructure
 ```bash
-# Developer workflow (Sample-saas-app)
-git commit -am "Add new feature"
-git push origin main
+# Automated (via GitHub Actions)
+# Push to cloudnative-saas-eks → Auto-deploys
 
-# CI/CD automatically:
-# 1. Builds and pushes images to ECR
-# 2. Updates Gitops-pipeline Git repo with new tags
-# 3. Argo CD detects changes and deploys to cluster
+# Manual
+cd scripts
+./deploy.sh dev
 ```
 
-### Manual GitOps Updates
-
-Manually update application configurations:
-
+### Deploy Applications
 ```bash
-# Make changes to application manifests
-git commit -am "Update application configuration"
-git push
+# Via Argo CD
+kubectl apply -f argocd/app-of-apps.yaml
 
-# Argo CD automatically syncs and deploys
-```
-
-### Multi-Tenant Management
-
-Manage multiple tenants (platform, analytics) with Kustomize overlays:
-
-```bash
-# Check platform tenant deployment
-argocd app get sample-saas-app-platform
-
-# Check analytics tenant deployment
-argocd app get sample-saas-app-analytics
-
-# View tenant-specific resources
-kubectl get all -n platform
-kubectl get all -n analytics
-```
-
-### Multi-Environment Management
-
-Manage dev, staging, and production environments with Kustomize overlays:
-
-```bash
-# Deploy to dev (if configured)
-kubectl apply -k apps/sample-saas-app/overlays/dev
-
-# Deploy to prod (if configured)
-kubectl apply -k apps/sample-saas-app/overlays/prod
-```
-
-### Image Update Automation
-
-Two methods for updating container images:
-
-**CI/CD Pipeline Updates (Current Implementation)**
-- Sample-saas-app CD pipeline builds images and updates GitOps repo
-- Updates image tags in `base/kustomization.yaml` and overlay files
-- Argo CD detects Git changes and deploys automatically
-
-**Optional: Argo CD Image Updater**
-- Can be configured separately for automated image scanning
-- Updates Git repository with new tags
-- See [Argo CD Image Updater documentation](https://argocd-image-updater.readthedocs.io/)
-
-## 🛡️ Security Best Practices
-
-- **Git Authentication**: Use SSH keys or deploy keys for Git access
-- **IRSA**: IAM Roles for Service Accounts for AWS resource access
-- **Secrets Management**: Integrate with AWS Secrets Manager
-- **RBAC**: Fine-grained access control for Argo CD
-- **Network Policies**: Restrict pod-to-pod communication
-
-## 📊 Monitoring
-
-Argo CD provides built-in observability:
-
-```bash
-# Check application status
+# Check status
 argocd app list
-
-# View application health
-argocd app get sample-saas-app-platform
-
-# Check sync history
-argocd app history sample-saas-app-platform
-
-# View application logs
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-application-controller
+kubectl get pods -n platform
+kubectl get pods -n analytics
 ```
 
-## 🤝 Contributing
+### Access Argo CD UI
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Open: https://localhost:8080
+```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Sync ECR Repositories
+```bash
+# Via GitHub Actions
+# Actions → "Sync ECR Repository Names" → Run workflow
+```
 
-## 📄 License
+### Destroy Infrastructure
+```bash
+# Via GitHub Actions
+# Actions → "Destroy Infrastructure" → Run workflow
 
-This project is licensed under the MIT License.
+# Or manual
+cd scripts
+./destroy.sh dev
+```
 
-## 🔗 Related Projects
+## 🛡️ Security
 
-- [cloudnative-saas-eks](https://github.com/SaaSInfraLab/cloudnative-saas-eks) - EKS infrastructure setup
-- [Sample-saas-app](https://github.com/SaaSInfraLab/Sample-saas-app) - Sample multi-tenant SaaS application
-- [monitoring-stack](https://github.com/SaaSInfraLab/monitoring-stack) - Prometheus/Grafana monitoring
+- **AWS Access**: Use OIDC (recommended) or access keys
+- **Git Access**: Use deploy keys or GitHub tokens
+- **Secrets**: Stored in AWS Secrets Manager (for platform tenant)
+- **Network**: Network policies enforce zero-trust model
+
+## 🔗 Related Repositories
+
+- **[cloudnative-saas-eks](https://github.com/SaaSInfraLab/cloudnative-saas-eks)**: Infrastructure configuration (single source of truth)
+- **[Sample-saas-app](https://github.com/SaaSInfraLab/Sample-saas-app)**: Application code and CI/CD
+- **[Terraform-modules](https://github.com/SaaSInfraLab/Terraform-modules)**: Reusable Terraform modules
 
 ## 📞 Support
 
-For issues and questions:
-
-- Open an issue on GitHub
-- Check the [bootstrap guide](argocd/bootstrap/README.md)
-- Review the [Argo CD documentation](https://argo-cd.readthedocs.io/)
-- See [Argo CD README](ARGOCD_README.md) for complete documentation
+- **Issues**: Open a GitHub issue
+- **Documentation**: See inline comments in workflow files
+- **Argo CD Docs**: https://argo-cd.readthedocs.io/
 
 ---
 
 **Built with ❤️ for the CloudNative SaaS community**
-
