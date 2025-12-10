@@ -45,10 +45,15 @@ jobs:
         with:
           terraform_version: "1.6.0"
 
-      - name: Setup AWS CLI
+      - name: Verify AWS CLI
         run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
+          aws --version || echo "AWS CLI not found, installing..."
+          if ! command -v aws &> /dev/null; then
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -q awscliv2.zip
+            sudo ./aws/install
+            aws --version
+          fi
 
       - name: Make scripts executable
         run: |
