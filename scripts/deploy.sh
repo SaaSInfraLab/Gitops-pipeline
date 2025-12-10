@@ -39,13 +39,6 @@ git clone --depth 1 "${TERRAFORM_REPO_URL}" "${TEMP_DIR}/cloudnative-saas-eks" |
 echo "✓ Repository cloned"
 echo ""
 
-# Validate config directory exists (configs are in the cloned repo)
-if [ ! -d "${CONFIG_DIR}" ]; then
-    echo "Error: Configuration directory not found: ${CONFIG_DIR}"
-    echo "Make sure config files exist in cloudnative-saas-eks/examples/dev-environment/config/"
-    exit 1
-fi
-
 # Set paths - configs are now in the cloned cloudnative-saas-eks repo
 CONFIG_DIR="${TEMP_DIR}/cloudnative-saas-eks/examples/dev-environment/config"
 INFRA_DIR="${TEMP_DIR}/cloudnative-saas-eks/examples/dev-environment/infrastructure"
@@ -55,6 +48,13 @@ INFRA_TFVARS="${CONFIG_DIR}/infrastructure.tfvars"
 TENANTS_TFVARS="${CONFIG_DIR}/tenants.tfvars"
 INFRA_BACKEND="${CONFIG_DIR}/infrastructure/backend-dev.tfbackend"
 TENANTS_BACKEND="${CONFIG_DIR}/tenants/backend-dev.tfbackend"
+
+# Validate config directory exists (configs are in the cloned repo)
+if [ ! -d "${CONFIG_DIR}" ]; then
+    echo "Error: Configuration directory not found: ${CONFIG_DIR}"
+    echo "Make sure config files exist in cloudnative-saas-eks/examples/dev-environment/config/"
+    exit 1
+fi
 
 # Validate tfvars files exist
 if [ ! -f "${COMMON_TFVARS}" ]; then
