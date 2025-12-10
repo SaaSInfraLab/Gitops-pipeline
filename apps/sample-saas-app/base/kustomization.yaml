@@ -7,20 +7,11 @@ resources:
 commonLabels:
   app.kubernetes.io/managed-by: argocd
   app.kubernetes.io/part-of: sample-saas-app
-# Image configuration - AUTO-UPDATED by CD pipeline
-# The CD pipeline in Sample-saas-app dynamically constructs the ECR image path
-# from AWS account ID and GitHub secrets (ECR_BACKEND_REPO, ECR_FRONTEND_REPO)
-# and updates both newName and newTag automatically on every deployment
-# 
-# These placeholder values will be replaced by the CD pipeline:
-# - newName: Constructed as {AWS_ACCOUNT}.dkr.ecr.{REGION}.amazonaws.com/{ECR_REPO_NAME}
-# - newTag: Extracted from the built image tag (branch name, SHA, or latest)
+
 images:
   - name: task-management-backend
-    # Auto-updated by CD pipeline - do not hardcode ECR repository name
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
-    newTag: flux-test # Auto-updated by CD pipeline
+    newName: PLACEHOLDER_ECR_BACKEND_URL
+    newTag: latest
   - name: task-management-frontend
-    # Auto-updated by CD pipeline - do not hardcode ECR repository name
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
-    newTag: flux-test # Auto-updated by CD pipeline
+    newName: PLACEHOLDER_ECR_FRONTEND_URL
+    newTag: latest

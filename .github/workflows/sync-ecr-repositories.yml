@@ -1,0 +1,139 @@
+name: Sync ECR Repository Names
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 3 AM UTC to ensure ECR repository names are up to date
+    - cron: '0 3 * * *'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/sync-ecr-repositories.yml'
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  sync-ecr-repositories:
+    name: Sync ECR Repository Names from Secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+      
+      - name: Sync ECR repository names to kustomization files
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ECR_BACKEND_REPO: ${{ secrets.ECR_BACKEND_REPO }}
+          ECR_FRONTEND_REPO: ${{ secrets.ECR_FRONTEND_REPO }}
+        run: |
+          set -e
+          
+          echo "🔄 Syncing ECR repository names from GitHub secrets..."
+          
+          # Get AWS account ID
+          ECR_REGISTRY=$(aws sts get-caller-identity --query Account --output text)
+          echo "🔍 AWS Account ID: $ECR_REGISTRY"
+          
+          # Validate secrets are set
+          if [ -z "$ECR_BACKEND_REPO" ] || [ -z "$ECR_FRONTEND_REPO" ]; then
+            echo "❌ ECR repository names not found in secrets"
+            echo "   Please add ECR_BACKEND_REPO and ECR_FRONTEND_REPO secrets"
+            exit 1
+          fi
+          
+          # Construct full ECR image paths
+          BACKEND_NAME="${ECR_REGISTRY}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_BACKEND_REPO}"
+          FRONTEND_NAME="${ECR_REGISTRY}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_FRONTEND_REPO}"
+          
+          echo "📋 ECR image paths:"
+          echo "  Backend: $BACKEND_NAME"
+          echo "  Frontend: $FRONTEND_NAME"
+          echo ""
+          
+          # Function to update kustomization file (preserves existing tags)
+          update_kustomization() {
+            local kustom_file=$1
+            local backend_name=$2
+            local frontend_name=$3
+            
+            if [ ! -f "$kustom_file" ]; then
+              echo "⚠️  File not found: $kustom_file"
+              return
+            fi
+            
+            echo "📝 Updating $kustom_file..."
+            
+            # Get existing tags (or use 'latest' as default)
+            BACKEND_TAG=$(yq eval '.images[0].newTag // "latest"' "$kustom_file")
+            FRONTEND_TAG=$(yq eval '.images[1].newTag // "latest"' "$kustom_file")
+            
+            # Update repository names (preserve tags)
+            yq eval ".images[0].newName = \"$backend_name\"" -i "$kustom_file"
+            yq eval ".images[0].newTag = \"$BACKEND_TAG\"" -i "$kustom_file"
+            yq eval ".images[1].newName = \"$frontend_name\"" -i "$kustom_file"
+            yq eval ".images[1].newTag = \"$FRONTEND_TAG\"" -i "$kustom_file"
+            
+            echo "✅ Updated $kustom_file"
+          }
+          
+          # Update base kustomization
+          update_kustomization "apps/sample-saas-app/base/kustomization.yaml" "$BACKEND_NAME" "$FRONTEND_NAME"
+          
+          # Update platform overlay
+          update_kustomization "apps/sample-saas-app/overlays/platform/kustomization.yaml" "$BACKEND_NAME" "$FRONTEND_NAME"
+          
+          # Update analytics overlay
+          update_kustomization "apps/sample-saas-app/overlays/analytics/kustomization.yaml" "$BACKEND_NAME" "$FRONTEND_NAME"
+          
+          echo ""
+          echo "✅ Successfully synced ECR repository names to all kustomization files"
+      
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No changes to commit (ECR repository names already up to date)"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📋 Changes detected:"
+            git diff --stat
+          fi
+      
+      - name: Commit and push changes
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add apps/sample-saas-app/
+          git commit -m "chore: sync ECR repository names from GitHub secrets" || {
+            echo "⚠️  No changes to commit"
+            exit 0
+          }
+          
+          git push origin develop || {
+            echo "❌ Failed to push changes"
+            exit 1
+          }
+          
+          echo "✅ Successfully synced ECR repositories from secrets"
+

@@ -1,0 +1,96 @@
+name: Auto-Apply Infrastructure
+
+on:
+  # Triggered when cloudnative-saas-eks repository dispatches an event
+  repository_dispatch:
+    types: [infrastructure-changed]
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      - name: Setup AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/deploy.sh
+          chmod +x scripts/capture-outputs.sh
+
+      - name: Determine Environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            # Get environment from repository_dispatch payload, default to dev
+            ENV="${{ github.event.client_payload.environment }}"
+            if [ -z "$ENV" ]; then
+              ENV="dev"
+            fi
+            echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy Infrastructure
+        run: |
+          ./scripts/deploy.sh ${{ steps.env.outputs.environment }}
+
+      - name: Capture Terraform Outputs
+        run: |
+          ./scripts/capture-outputs.sh ${{ steps.env.outputs.environment }}
+
+      - name: Check for Changes
+        id: git-status
+        run: |
+          git diff --exit-code infra_version.yaml || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and Push Changes
+        if: steps.git-status.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add infra_version.yaml
+          git commit -m "chore: update infrastructure version and outputs [skip ci]"
+          git push
+

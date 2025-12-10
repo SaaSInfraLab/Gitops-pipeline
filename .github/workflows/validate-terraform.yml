@@ -1,0 +1,49 @@
+name: Validate Terraform Configuration
+
+on:
+  pull_request:
+    paths:
+      - 'infrastructure-config/**/*.tfvars'
+
+jobs:
+  validate-terraform:
+    name: Validate Terraform Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Terraform Repository
+        uses: actions/checkout@v4
+        with:
+          repository: SaaSInfraLab/cloudnative-saas-eks
+          path: terraform-repo
+          fetch-depth: 1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Validate Infrastructure Configuration
+        run: |
+          cd terraform-repo/examples/dev-environment/infrastructure
+          terraform init -backend-config="../../../infrastructure-config/dev/infrastructure/backend-dev.tfbackend"
+          terraform fmt -check
+          terraform validate -var-file="../../../infrastructure-config/dev/infrastructure.tfvars"
+
+      - name: Validate Tenants Configuration
+        run: |
+          cd terraform-repo/examples/dev-environment/tenants
+          terraform init -backend-config="../../../infrastructure-config/dev/tenants/backend-dev.tfbackend"
+          terraform fmt -check
+          terraform validate -var-file="../../../infrastructure-config/dev/tenants.tfvars"
+

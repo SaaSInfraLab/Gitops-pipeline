@@ -4,6 +4,6 @@ metadata:
   name: data
   labels:
     tenant: data
-    managed-by: flux
+    managed-by: argocd
     environment: dev
 

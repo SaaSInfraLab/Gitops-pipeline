@@ -62,6 +62,7 @@ This repository provides a complete Argo CD GitOps pipeline setup for managing K
 - AWS EKS cluster (created via `cloudnative-saas-eks`)
 - `kubectl` configured to access your cluster
 - Git repository access (GitHub, GitLab, etc.)
+- GitHub Actions secrets configured (see [SECRETS_SETUP.md](SECRETS_SETUP.md))
 
 ### Install Argo CD
 
@@ -83,6 +84,19 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 # Username: admin
 # Password: (from install script output)
 ```
+
+### Configure GitHub Secrets
+
+Before deploying, configure GitHub Actions secrets in this repository:
+
+1. Go to **Settings → Secrets and variables → Actions**
+2. Add the following secrets (see [SECRETS_SETUP.md](SECRETS_SETUP.md) for details):
+   - `AWS_ROLE_ARN` - IAM role for AWS access
+   - `ECR_BACKEND_REPO` - Backend ECR repository name
+   - `ECR_FRONTEND_REPO` - Frontend ECR repository name
+
+3. Run the sync workflow to update kustomization files:
+   - Go to **Actions → "Sync ECR Repository Names" → Run workflow**
 
 ### Deploy Applications
 
@@ -164,10 +178,12 @@ Gitops-pipeline/
 
 Applications are defined using Argo CD Application CRDs:
 
-- **sample-saas-app-platform**: Platform tenant deployment
-- **sample-saas-app-analytics**: Analytics tenant deployment
-- **monitoring-stack**: Prometheus/Grafana monitoring
-- **infrastructure**: Cluster-wide infrastructure resources
+- **sample-saas-app-platform**: Platform tenant deployment with AWS Secrets Manager integration
+- **sample-saas-app-analytics**: Analytics tenant deployment with resource limits
+- **monitoring-stack**: Prometheus/Grafana/Alertmanager monitoring stack
+- **infrastructure**: Cluster-wide infrastructure (namespaces, RBAC, network policies)
+
+See [INFRASTRUCTURE_README.md](INFRASTRUCTURE_README.md) and [MONITORING_STACK_README.md](MONITORING_STACK_README.md) for detailed information.
 
 ### Argo CD Bootstrap
 
@@ -192,14 +208,41 @@ Applications are defined using Kustomize overlays for multi-tenant and environme
 
 Infrastructure resources managed via GitOps:
 
-- **Namespaces**: Multi-tenant namespace definitions
-- **Network Policies**: Pod-to-pod communication rules
-- **RBAC**: Role-based access control configurations
+- **Namespaces**: Multi-tenant namespace definitions (platform, analytics, data, monitoring)
+- **Network Policies**: Pod-to-pod communication rules (default-deny for security)
+- **RBAC**: Role-based access control configurations (add your roles here)
+
+**What Infrastructure Does:**
+- Creates and manages tenant namespaces before applications deploy
+- Applies network security policies (zero-trust model)
+- Manages RBAC for applications and services
+- Ensures proper namespace labels and organization
+
+See [INFRASTRUCTURE_README.md](INFRASTRUCTURE_README.md) for details.
+
+### Monitoring Stack
+
+The monitoring stack provides:
+- **Prometheus**: Metrics collection and storage
+- **Grafana**: Visualization dashboards
+- **Alertmanager**: Alert routing and notifications
+- **ServiceMonitors**: Automatic metric scraping from applications
+
+**What Monitoring Stack Does:**
+- Collects cluster and application metrics
+- Provides pre-configured dashboards for Kubernetes and applications
+- Sends alerts for cluster health, node issues, and pod failures
+- Integrates with applications via ServiceMonitors
+
+See [MONITORING_STACK_README.md](MONITORING_STACK_README.md) for details.
 
 ## 📚 Documentation
 
 - [Argo CD README](ARGOCD_README.md) - Complete Argo CD guide and documentation
 - [Bootstrap Guide](argocd/bootstrap/README.md) - Detailed installation and setup instructions
+- [Infrastructure README](INFRASTRUCTURE_README.md) - Infrastructure components explained
+- [Monitoring Stack README](MONITORING_STACK_README.md) - Monitoring setup and usage
+- [Secrets Setup](SECRETS_SETUP.md) - GitHub Actions secrets configuration
 
 ## 🔗 Integration
 
@@ -244,9 +287,14 @@ Fully GitOps deployment of the [Sample-saas-app](https://github.com/SaaSInfraLab
 
 **Configuration:**
 - Base manifests in `apps/sample-saas-app/base/`
-- Platform overlay: `apps/sample-saas-app/overlays/platform/`
-- Analytics overlay: `apps/sample-saas-app/overlays/analytics/`
+- Platform overlay: `apps/sample-saas-app/overlays/platform/` (with AWS Secrets Manager)
+- Analytics overlay: `apps/sample-saas-app/overlays/analytics/` (with resource limits)
 - Cluster Kustomizations: `clusters/dev-environment/apps/sample-saas-app-*/`
+
+**Platform vs Analytics:**
+- **Platform**: Uses AWS Secrets Manager for RDS credentials via IRSA (IAM Roles for Service Accounts)
+- **Analytics**: Uses standard Kubernetes secrets, optimized for analytics workloads with resource limits
+- Both share the same base application code but have different configurations
 
 See [GitOps Integration Summary](docs/gitops-integration-summary.md) for detailed workflow documentation.
 
