@@ -1,5 +1,5 @@
-version: "1.0.2"
-last_deployed: "2025-12-11T08:38:19Z"
+version: "1.0.3"
+last_deployed: "2025-12-11T10:08:42Z"
 cluster_name: "cluster_name"
 aws_region: "aws_region"
 terraform_outputs:
@@ -42,6 +42,8 @@ terraform_outputs:
     rds_secret_arn: "arn:aws:secretsmanager:us-east-1:240623017727:secret:rds!db-1e315961-53a9-4f77-9e5f-4421ed376b60-AuWQPv"
     rds_secret_name: "rds-db-credentials/saas-infra-lab-dev-postgres"
     rds_security_group_id: "sg-0e73282ca72779ba6"
+    secrets_manager_role_arn: "arn:aws:iam::240623017727:role/saas-infra-lab-dev-saas-infra-lab-dev-secrets-manager-role"
+    secrets_manager_role_name: "saas-infra-lab-dev-saas-infra-lab-dev-secrets-manager-role"
     service_names: {'cluster_name': 'saas-infra-lab-dev', 'dynamodb_lock_table': 'saas-infra-lab-terraform-state-lock', 'ecr_backend_repo_name': 'saas-infra-lab-dev-backend', 'ecr_frontend_repo_name': 'saas-infra-lab-dev-frontend', 'rds_instance_name': 'saas-infra-lab-dev-postgres', 'terraform_state_bucket': 'saas-infra-lab-terraform-state', 'vpc_name': 'saas-infra-lab-dev-vpc'}
     tags_config: {'Environment': 'dev', 'ManagedBy': 'Terraform', 'Project': 'SaaSInfraLab', 'ProjectName': 'saas-infra-lab'}
     vpc_id: "vpc-02e17ef6d10a2d97e"
