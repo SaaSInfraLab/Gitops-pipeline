@@ -60,6 +60,7 @@ jobs:
           chmod +x scripts/deploy.sh
           chmod +x scripts/capture-outputs.sh
           chmod +x scripts/fix-rds-security-group-rules.sh
+          chmod +x scripts/install-argocd.sh
 
       - name: Determine Environment
         id: env
@@ -98,4 +99,83 @@ jobs:
           git add infra_version.yaml
           git commit -m "chore: update infrastructure version and outputs [skip ci]"
           git push
+
+  install-argocd:
+    name: Install ArgoCD
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS CLI
+        run: |
+          aws --version || echo "AWS CLI not found, installing..."
+          if ! command -v aws &> /dev/null; then
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -q awscliv2.zip
+            sudo ./aws/install
+            aws --version
+          fi
+
+      - name: Setup kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          kubectl version --client
+
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/install-argocd.sh
+
+      - name: Determine Environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            ENV="${{ github.event.client_payload.environment }}"
+            if [ -z "$ENV" ]; then
+              ENV="dev"
+            fi
+            echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install ArgoCD and Applications
+        run: |
+          # Get the temp directory path (same as deploy.sh uses)
+          TEMP_DIR=$(mktemp -d)
+          echo "TEMP_DIR=$TEMP_DIR" >> $GITHUB_ENV
+          
+          # Clone cloudnative-saas-eks to get Terraform outputs (if available)
+          echo "Cloning cloudnative-saas-eks repository to access Terraform outputs..."
+          git clone --depth 1 --branch testing https://github.com/SaaSInfraLab/cloudnative-saas-eks.git "$TEMP_DIR/cloudnative-saas-eks" || {
+            echo "⚠️  Failed to clone testing branch, trying main branch..."
+            git clone --depth 1 --branch main https://github.com/SaaSInfraLab/cloudnative-saas-eks.git "$TEMP_DIR/cloudnative-saas-eks" || {
+              echo "⚠️  Failed to clone cloudnative-saas-eks, will use AWS to find cluster"
+            }
+          }
+          
+          # Run install script
+          # Script will try Terraform outputs first, then fallback to AWS
+          ./scripts/install-argocd.sh ${{ steps.env.outputs.environment }} "$TEMP_DIR"
+          
+          # Cleanup
+          rm -rf "$TEMP_DIR"
 
