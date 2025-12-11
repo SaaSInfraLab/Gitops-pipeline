@@ -59,6 +59,7 @@ jobs:
         run: |
           chmod +x scripts/deploy.sh
           chmod +x scripts/capture-outputs.sh
+          chmod +x scripts/fix-rds-security-group-rules.sh
 
       - name: Determine Environment
         id: env

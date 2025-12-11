@@ -5,6 +5,9 @@
 
 set -e
 
+# Get AWS region from environment or use default
+AWS_REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMP_DIR="${1:-/tmp}"
 
@@ -26,16 +29,31 @@ if [ ! -f "main.tf" ] || [ ! -d ".terraform" ]; then
 fi
 
 # Get RDS security group ID from Terraform state
-RDS_SG_ID=$(terraform output -raw module.rds.security_group_id 2>/dev/null || echo "")
+# Try multiple output paths in case module structure changed
+RDS_SG_ID=$(terraform output -raw module.rds.security_group_id 2>/dev/null || \
+           terraform output -json 2>/dev/null | grep -o '"security_group_id"[^}]*' | grep -o 'sg-[a-z0-9]*' | head -1 || \
+           echo "")
 
 if [ -z "$RDS_SG_ID" ]; then
-    echo "⚠️  RDS security group not found in state. Skipping rule cleanup."
-    exit 0
+    echo "⚠️  RDS security group not found in state. Trying to get from AWS directly..."
+    # Try to get security group by name pattern
+    RDS_SG_ID=$(aws ec2 describe-security-groups \
+        --region "$AWS_REGION" \
+        --filters "Name=tag:Name,Values=*rds*sg*" "Name=description,Values=*RDS*" \
+        --query "SecurityGroups[0].GroupId" \
+        --output text 2>/dev/null || echo "")
+    
+    if [ -z "$RDS_SG_ID" ] || [ "$RDS_SG_ID" == "None" ]; then
+        echo "⚠️  Could not find RDS security group. Skipping rule cleanup."
+        exit 0
+    fi
+    echo "Found RDS security group: $RDS_SG_ID"
 fi
 
 # Get existing ingress rules for port 5432 (PostgreSQL) that reference other security groups
 EXISTING_RULES=$(aws ec2 describe-security-group-rules \
     --filters "Name=group-id,Values=$RDS_SG_ID" \
+    --region "$AWS_REGION" \
     --query "SecurityGroupRules[?IpProtocol=='tcp' && FromPort==5432 && ToPort==5432 && IsEgress==\`false\` && ReferencedGroupInfo!=null].SecurityGroupRuleId" \
     --output text 2>/dev/null || echo "")
 
@@ -48,10 +66,14 @@ fi
 # Terraform will recreate them properly
 echo "Removing existing rules to allow Terraform to recreate them..."
 for RULE_ID in $EXISTING_RULES; do
+    echo "  Removing rule: $RULE_ID"
     aws ec2 revoke-security-group-ingress \
         --group-id "$RDS_SG_ID" \
         --security-group-rule-ids "$RULE_ID" \
-        --output text >/dev/null 2>&1 || true
+        --region "$AWS_REGION" \
+        --output text >/dev/null 2>&1 || {
+        echo "  ⚠️  Failed to remove rule $RULE_ID, continuing..."
+    }
 done
 
 RULE_COUNT=$(echo $EXISTING_RULES | wc -w)

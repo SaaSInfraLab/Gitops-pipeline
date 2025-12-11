@@ -87,15 +87,23 @@ TF_OUTPUT=$(terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVA
 TF_EXIT_CODE=$?
 
 # Check if error is duplicate security group rule
-if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -q "InvalidPermission.Duplicate\|duplicate Security Group rule"; then
+if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -qiE "InvalidPermission\.Duplicate|duplicate.*Security Group rule|already exists"; then
     echo ""
     echo "⚠️  Duplicate security group rule detected. Fixing automatically..."
+    echo "Error details:"
+    echo "$TF_OUTPUT" | grep -iE "InvalidPermission|duplicate|already exists" | head -5
     
     # Run cleanup script to remove orphaned rules
     if [ -f "${SCRIPT_DIR}/fix-rds-security-group-rules.sh" ]; then
-        bash "${SCRIPT_DIR}/fix-rds-security-group-rules.sh" "${TEMP_DIR}" "${INFRA_DIR}" || true
+        echo "Running fix script..."
+        bash "${SCRIPT_DIR}/fix-rds-security-group-rules.sh" "${TEMP_DIR}" "${INFRA_DIR}" || {
+            echo "⚠️  Fix script encountered an issue, but continuing with retry..."
+        }
+    else
+        echo "⚠️  Fix script not found at ${SCRIPT_DIR}/fix-rds-security-group-rules.sh"
     fi
     
+    echo ""
     echo "Retrying terraform apply..."
     terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve
 elif [ $TF_EXIT_CODE -ne 0 ]; then
