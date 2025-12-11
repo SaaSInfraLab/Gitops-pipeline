@@ -7,10 +7,18 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  source:
-    repoURL: https://github.com/SaaSInfraLab/Gitops-pipeline
-    targetRevision: testing
-    path: clusters/dev-environment/apps/monitoring-stack
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 58.0.0  # Latest stable version
+      helm:
+        releaseName: monitoring-stack
+    - repoURL: https://github.com/SaaSInfraLab/Gitops-pipeline
+      targetRevision: testing
+      ref: values
+      helm:
+        valueFiles:
+          - apps/monitoring-stack/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -24,4 +32,3 @@ spec:
       - PrunePropagationPolicy=foreground
       - PruneLast=true
   revisionHistoryLimit: 10
-

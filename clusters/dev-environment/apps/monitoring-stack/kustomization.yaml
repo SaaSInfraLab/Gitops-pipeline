@@ -7,19 +7,10 @@ resources:
   # Reference the monitoring namespace from infrastructure
   - ../../../../infrastructure/namespaces/monitoring.yaml
   
-  # Note: For full monitoring stack deployment, you have two options:
-  #
-  # Option 1: Use Helm chart (Recommended)
-  # Add a HelmRelease resource that references the kube-prometheus-stack Helm chart
-  # See: Monitoring-stack/helm/kube-prometheus-stack/values.yaml
-  #
-  # Option 2: Use Kustomize from Monitoring-stack directory
-  # If Monitoring-stack is in the same repository, reference it:
-  # - ../../../../../Monitoring-stack/kustomize/base
-  #
-  # Option 3: Deploy via separate Argo CD Application
-  # Create a separate Argo CD Application that points to Monitoring-stack repo
-  # or use Helm chart directly in Argo CD
+  # Note: The monitoring stack is deployed via ArgoCD Application
+  # See: argocd/applications/monitoring-stack.yaml
+  # It uses the kube-prometheus-stack Helm chart with values from
+  # apps/monitoring-stack/values.yaml
 
 commonLabels:
   app: monitoring

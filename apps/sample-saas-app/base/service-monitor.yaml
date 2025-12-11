@@ -1,0 +1,43 @@
+# ServiceMonitor for Backend Application Metrics
+# The backend exposes Prometheus metrics at /metrics on port 9090
+# Backend uses express-prometheus-middleware when METRICS_ENABLED=true
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sample-saas-app-backend
+  labels:
+    app: sample-saas-app
+    component: backend
+    release: prometheus  # Required for kube-prometheus-stack to discover
+spec:
+  selector:
+    matchLabels:
+      app: backend
+      component: backend
+  endpoints:
+  - port: metrics  # Port 9090 from backend service
+    path: /metrics  # Standard Prometheus metrics endpoint
+    interval: 30s
+    scrapeTimeout: 10s
+---
+# ServiceMonitor for Frontend Application Metrics
+# Note: Frontend applications typically don't expose Prometheus metrics
+# This is included for future use if you add metrics to the frontend
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sample-saas-app-frontend
+  labels:
+    app: sample-saas-app
+    component: frontend
+    release: prometheus  # Required for kube-prometheus-stack to discover
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+      component: frontend
+  endpoints:
+  - port: http
+    path: /metrics  # Standard Prometheus metrics endpoint
+    interval: 30s
+    scrapeTimeout: 10s

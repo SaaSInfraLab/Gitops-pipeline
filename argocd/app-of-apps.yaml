@@ -22,4 +22,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
   revisionHistoryLimit: 10
+  # Only manage sample-saas-app applications
+  # Infrastructure (namespaces, network policies) is managed by Terraform
+  # Monitoring stack is not currently deployed
 

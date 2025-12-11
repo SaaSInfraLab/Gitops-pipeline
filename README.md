@@ -189,10 +189,10 @@ Gitops-pipeline/
 - Provides web UI for application management
 
 **Applications:**
-- **infrastructure**: Namespaces, network policies, RBAC
-- **monitoring-stack**: Prometheus, Grafana, Alertmanager
 - **sample-saas-app-platform**: Platform tenant deployment
 - **sample-saas-app-analytics**: Analytics tenant deployment
+
+**Note:** Infrastructure resources (namespaces, network policies) are managed by Terraform in `cloudnative-saas-eks`. Monitoring stack is not currently deployed.
 
 **How to use:**
 ```bash
