@@ -4,8 +4,9 @@ namespace: platform
 resources:
   - ../../base
   - namespace.yaml
-  - aws-secrets-manager.yaml
-  - secret-sync-job.yaml
+  # Temporarily commented out until Secrets Store CSI Driver CRDs are installed
+  # - aws-secrets-manager.yaml
+  # - secret-sync-job.yaml
 commonLabels:
   tenant: platform
   environment: dev
