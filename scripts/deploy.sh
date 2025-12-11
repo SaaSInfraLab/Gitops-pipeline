@@ -82,7 +82,30 @@ echo "Initializing Terraform..."
 terraform init -backend-config="${INFRA_BACKEND}"
 
 echo "Applying infrastructure..."
-terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve
+# Capture terraform output to check for errors
+TF_OUTPUT=$(terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1)
+TF_EXIT_CODE=$?
+
+# Check if error is duplicate security group rule
+if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -q "InvalidPermission.Duplicate\|duplicate Security Group rule"; then
+    echo ""
+    echo "⚠️  Duplicate security group rule detected. Fixing automatically..."
+    
+    # Run cleanup script to remove orphaned rules
+    if [ -f "${SCRIPT_DIR}/fix-rds-security-group-rules.sh" ]; then
+        bash "${SCRIPT_DIR}/fix-rds-security-group-rules.sh" "${TEMP_DIR}" "${INFRA_DIR}" || true
+    fi
+    
+    echo "Retrying terraform apply..."
+    terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve
+elif [ $TF_EXIT_CODE -ne 0 ]; then
+    # Different error - show output and exit
+    echo "$TF_OUTPUT"
+    exit $TF_EXIT_CODE
+else
+    # Success - show output
+    echo "$TF_OUTPUT"
+fi
 
 CLUSTER_NAME=$(terraform output -raw cluster_name 2>/dev/null || echo "")
 AWS_REGION=$(terraform output -raw aws_region 2>/dev/null || echo "")
