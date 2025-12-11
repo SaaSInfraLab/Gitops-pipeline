@@ -29,6 +29,46 @@ patches:
         value: platform
       - op: remove
         path: /spec/template/spec/serviceAccountName
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0
+        value:
+          name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-host
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1
+        value:
+          name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-port
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2
+        value:
+          name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-name
+      - op: replace
+        path: /spec/template/spec/containers/0/env/3
+        value:
+          name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-user
+      - op: replace
+        path: /spec/template/spec/containers/0/env/4
+        value:
+          name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-password
     target:
       kind: Deployment
       name: backend
