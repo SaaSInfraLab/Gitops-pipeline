@@ -83,8 +83,10 @@ terraform init -backend-config="${INFRA_BACKEND}"
 
 echo "Applying infrastructure..."
 # Capture terraform output to check for errors
-TF_OUTPUT=$(terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1)
-TF_EXIT_CODE=$?
+# Use tee to both capture and display output in real-time
+terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1 | tee /tmp/terraform-apply-output.log
+TF_EXIT_CODE=${PIPESTATUS[0]}
+TF_OUTPUT=$(cat /tmp/terraform-apply-output.log)
 
 # Check if error is duplicate security group rule
 if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -qiE "InvalidPermission\.Duplicate|duplicate.*Security Group rule|already exists"; then
@@ -107,8 +109,14 @@ if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -qiE "InvalidPermission\.
     echo "Retrying terraform apply..."
     terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve
 elif [ $TF_EXIT_CODE -ne 0 ]; then
-    # Different error - show output and exit
+    # Different error - show full output and exit
+    echo ""
+    echo "❌ Terraform apply failed with exit code: $TF_EXIT_CODE"
+    echo "=========================================="
+    echo "Full Terraform Output:"
+    echo "=========================================="
     echo "$TF_OUTPUT"
+    echo "=========================================="
     exit $TF_EXIT_CODE
 else
     # Success - show output
