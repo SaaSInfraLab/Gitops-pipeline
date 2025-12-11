@@ -1,13 +1,9 @@
-# Updated: 2025-12-11T10:46:33Z
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: platform
 resources:
   - ../../base
   - namespace.yaml
-  # Temporarily commented out until Secrets Store CSI Driver CRDs are installed
-  # - aws-secrets-manager.yaml
-  # - secret-sync-job.yaml
 commonLabels:
   tenant: platform
   environment: dev
