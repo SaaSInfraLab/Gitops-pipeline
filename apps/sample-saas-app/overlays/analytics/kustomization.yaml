@@ -21,6 +21,9 @@ patches:
       - op: add
         path: /spec/template/metadata/labels/tenant
         value: analytics
+      - op: add
+        path: /spec/selector/matchLabels/tenant
+        value: analytics
       - op: remove
         path: /spec/template/spec/serviceAccountName
       - op: replace
@@ -89,6 +92,9 @@ patches:
   - patch: |-
       - op: add
         path: /spec/template/metadata/labels/tenant
+        value: analytics
+      - op: add
+        path: /spec/selector/matchLabels/tenant
         value: analytics
     target:
       kind: Deployment

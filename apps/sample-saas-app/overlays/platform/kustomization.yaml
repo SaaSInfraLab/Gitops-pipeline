@@ -25,12 +25,18 @@ patches:
       - op: add
         path: /spec/template/metadata/labels/tenant
         value: platform
+      - op: add
+        path: /spec/selector/matchLabels/tenant
+        value: platform
     target:
       kind: Deployment
       name: backend
   - patch: |-
       - op: add
         path: /spec/template/metadata/labels/tenant
+        value: platform
+      - op: add
+        path: /spec/selector/matchLabels/tenant
         value: platform
     target:
       kind: Deployment
