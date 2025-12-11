@@ -28,6 +28,8 @@ patches:
       - op: add
         path: /spec/selector/matchLabels/tenant
         value: platform
+      - op: remove
+        path: /spec/template/spec/serviceAccountName
     target:
       kind: Deployment
       name: backend
