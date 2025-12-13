@@ -88,6 +88,30 @@ terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-
 TF_EXIT_CODE=${PIPESTATUS[0]}
 TF_OUTPUT=$(cat /tmp/terraform-apply-output.log)
 
+# Check if error is for_each related
+if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -qiE "Invalid for_each|for_each.*will be known only after apply"; then
+    echo ""
+    echo "⚠️  for_each error detected. Applying dependencies first, then retrying..."
+    echo "Error details:"
+    echo "$TF_OUTPUT" | grep -iE "Invalid for_each|for_each" | head -3
+    
+    # Try to apply base resources first (VPC, Security Groups, EKS Cluster)
+    # This creates the resources that for_each depends on
+    echo ""
+    echo "Step 1: Applying base resources (VPC, Security Groups, EKS Cluster)..."
+    terraform apply -target=module.vpc -target=module.eks.module.eks.aws_eks_cluster.main \
+      -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1 | tee /tmp/terraform-apply-stage1.log || {
+      echo "⚠️  Stage 1 apply had issues, but continuing..."
+    }
+    
+    # Now retry full apply (for_each should work now that dependencies exist)
+    echo ""
+    echo "Step 2: Retrying full infrastructure apply..."
+    terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1 | tee /tmp/terraform-apply-output.log
+    TF_EXIT_CODE=${PIPESTATUS[0]}
+    TF_OUTPUT=$(cat /tmp/terraform-apply-output.log)
+fi
+
 # Check if error is duplicate security group rule
 if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -qiE "InvalidPermission\.Duplicate|duplicate.*Security Group rule|already exists"; then
     echo ""
