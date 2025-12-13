@@ -81,11 +81,11 @@ if [ -f "${TENANTS_BACKEND}" ]; then
     terraform init -backend-config="${TENANTS_BACKEND}" -reconfigure
     
     if [ "${AUTO_APPROVE}" = "true" ]; then
-        echo "Destroying tenants (auto-approve)..."
-        terraform destroy -var-file="${COMMON_TFVARS}" -var-file="${TENANTS_TFVARS}" -auto-approve || echo "No tenant resources to destroy"
+        echo "Destroying tenants (auto-approve with -refresh=false)..."
+        terraform destroy -refresh=false -var-file="${COMMON_TFVARS}" -var-file="${TENANTS_TFVARS}" -auto-approve || echo "No tenant resources to destroy"
     else
-        echo "Destroying tenants..."
-        terraform destroy -var-file="${COMMON_TFVARS}" -var-file="${TENANTS_TFVARS}" || echo "No tenant resources to destroy"
+        echo "Destroying tenants (with -refresh=false)..."
+        terraform destroy -refresh=false -var-file="${COMMON_TFVARS}" -var-file="${TENANTS_TFVARS}" || echo "No tenant resources to destroy"
     fi
 else
     echo "Backend config not found, skipping tenants"
@@ -112,11 +112,11 @@ if [ -f "${INFRA_BACKEND}" ]; then
     fi
     
     if [ "${AUTO_APPROVE}" = "true" ]; then
-        echo "Destroying infrastructure (auto-approve)..."
-        terraform destroy -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" -auto-approve
+        echo "Destroying infrastructure (auto-approve with -refresh=false)..."
+        terraform destroy -refresh=false -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" -auto-approve
     else
-        echo "Destroying infrastructure..."
-        terraform destroy -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}"
+        echo "Destroying infrastructure (with -refresh=false)..."
+        terraform destroy -refresh=false -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}"
     fi
     
     # Clean up kubeconfig
