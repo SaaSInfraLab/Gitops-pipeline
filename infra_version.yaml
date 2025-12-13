@@ -1,0 +1,61 @@
+version: "1.0.3"
+last_deployed: "2025-12-11T10:08:42Z"
+cluster_name: "cluster_name"
+aws_region: "aws_region"
+terraform_outputs:
+  infrastructure:
+    aws_account_id: "240623017727"
+    aws_region: "us-east-1"
+    cluster_arn: "arn:aws:eks:us-east-1:240623017727:cluster/saas-infra-lab-dev"
+    cluster_certificate_authority_data: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJTSsvQWFLMkJ6Ymt3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRFeU1UQXdPREkxTURWYUZ3MHpOVEV5TURnd09ETXdNRFZhTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUNoSjh2VllGMHRtazc2dWhLU1E0S3FqT29QVnpyaFh2eTZMaU0vaGJaYjlKVlcybmZTTDVqZU0wa1IKbmM1ZWRpTlVQM0l1RnJXSmF6OExIZlpYSUVWQVh5bmdoUFU3QlUzM09odnFQa3ZxYXF0SWxjNGtBMGIxVWtBWAo3L0pCdVBSd09ObWYvclBURW4vQTljTWVpbFBnS1EyNGxMQmRZRnQ4cTZxWllDMWdEUGdLdjBvaUFjNmJzekh2Cis4aUxBVWJ1MmZ4UCtWTHY0OHVEUThScyt6aUtlYUpibExTUDRlNEJJQVd5NHlJUWg1VWloeXUvRUQ4OWZKbUYKenZwMTY2UGNGN21yakxIbUNid3BkdUdaWGZQWTdISllqYkdHN0hJSGpubnUwSGtDU0NJVnFweE9YaUxQR0FwegpQc3NqZ1VDTXpnaXcyaGhXb0lMMm5pSVRxaTVGQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTQlVmd1VjU3M4ZUV2S01UdkF2MjQ0Nllud3BUQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQjdxUFFGT09WMwp2ZFB5Nmlmbm15TTV2aTVxMTdxZGkzdUFJZjBPWGwyQlZlVUh1MGljY01XQU1Sb2swMlk1MnZ3bGw3bUV2aXM2Ck94bnVuQzVMd2UrQklES2g4Rnl2WDlZUVRPZVByMjVaSUhUOXhKZ2NlSnBkamROSmRpbFVuK0Zpa0lBZ3BOOVUKSjd3NlA1VkoyU0NpQVJRcTRCdmM3cmdtMUpvZVAxSUdvN1kwcUtqUndwWU5BSmZMUEJpRmVmSFZ1WTFwVWtDdwo2MjZwRDZMdmJidnNjV1JObnllTUFBR05JMHc4V2RJZEpvWHhtN1YwdWtSaVZKV3ZOYU8xQm5DUWdzTlhKdlkxCm9TbFRRcFcreTZ6cW81bkFvZmZxclE1MGxUVnFvTlJWY2xVMThvaE1SVURkK0pmTUx6V3ZMN1RzemdnV3dXWHYKUHZvYno0YnY5Q0x3Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+    cluster_config: {'cluster_name': 'saas-infra-lab-dev', 'cluster_version': '1.32', 'environment': 'dev', 'region': 'us-east-1'}
+    cluster_endpoint: "https://49E105315E03F8504DEE5DD68152D515.gr7.us-east-1.eks.amazonaws.com"
+    cluster_iam_role_arn: "arn:aws:iam::240623017727:role/saas-infra-lab-dev-saas-infra-lab-dev-cluster-role"
+    cluster_info: {'cluster_name': 'saas-infra-lab-dev', 'cluster_version': '1.32', 'environment': 'dev', 'region': 'us-east-1'}
+    cluster_name: "saas-infra-lab-dev"
+    cluster_security_group_id: "sg-08ea2d3bf7eb05b50"
+    cluster_version: "1.32"
+    complete_config: {'aws': {'account_id': '240623017727', 'region': 'us-east-1'}, 'cluster': {'name': 'saas-infra-lab-dev', 'version': '1.32'}, 'environment': 'dev', 'github': {'gitops_repo': 'https://github.com/SaaSInfraLab/Gitops-pipeline', 'monitoring_stack': 'https://github.com/SaaSInfraLab/Monitoring-stack', 'org': 'SaaSInfraLab', 'sample_app': 'https://github.com/SaaSInfraLab/Sample-Saas-App', 'terraform_modules': 'github.com/SaaSInfraLab/Terraform-modules'}, 'project': 'saas-infra-lab', 'services': {'ecr_backend_repo': 'saas-infra-lab-dev-backend', 'ecr_frontend_repo': 'saas-infra-lab-dev-frontend', 'rds_instance': 'saas-infra-lab-dev-postgres'}, 'tags': {'Environment': 'dev', 'ManagedBy': 'Terraform', 'Project': 'SaaSInfraLab', 'ProjectName': 'saas-infra-lab'}}
+    ecr_backend_repository_name: "saas-infra-lab-dev-backend"
+    ecr_backend_repository_url: "240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend"
+    ecr_config: {'backend_repository_name': 'saas-infra-lab-dev-backend', 'backend_repository_url': '240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend', 'frontend_repository_name': 'saas-infra-lab-dev-frontend', 'frontend_repository_url': '240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend', 'registry_url': '240623017727.dkr.ecr.us-east-1.amazonaws.com'}
+    ecr_frontend_repository_name: "saas-infra-lab-dev-frontend"
+    ecr_frontend_repository_url: "240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend"
+    ecr_registry_id: "240623017727"
+    ecr_registry_url: "240623017727.dkr.ecr.us-east-1.amazonaws.com"
+    github_config: {'cloudnative_saas_eks_url': 'https://github.com/SaaSInfraLab/cloudnative-saas-eks', 'github_org': 'SaaSInfraLab', 'gitops_repo_url': 'https://github.com/SaaSInfraLab/Gitops-pipeline', 'monitoring_stack_url': 'https://github.com/SaaSInfraLab/Monitoring-stack', 'sample_app_repo_url': 'https://github.com/SaaSInfraLab/Sample-Saas-App', 'terraform_modules_url': 'github.com/SaaSInfraLab/Terraform-modules'}
+    kubeconfig_update_command: "aws eks update-kubeconfig --region us-east-1 --name saas-infra-lab-dev"
+    network_config: {'availability_zones': ['us-east-1a', 'us-east-1b', 'us-east-1c'], 'vpc_cidr': '10.0.0.0/16'}
+    node_iam_role_arn: "arn:aws:iam::240623017727:role/saas-infra-lab-dev-saas-infra-lab-dev-node-role"
+    nodes_security_group_id: "sg-0826c3cf197dfac93"
+    private_subnet_ids: ['subnet-0dc951ed4a6f5725b', 'subnet-0463da376909cfb8b', 'subnet-069cd1c9f6a4ebc10']
+    project_config: {'aws_account_id': '240623017727', 'aws_region': 'us-east-1', 'cluster_name': 'saas-infra-lab-dev', 'environment': 'dev', 'project_name': 'saas-infra-lab'}
+    public_subnet_ids: ['subnet-0e19795ec3cf3360b', 'subnet-05c4eac407a1e0a67', 'subnet-0ae50596e3c0139d3']
+    rds_address: "saas-infra-lab-dev-postgres.c696ekgq616y.us-east-1.rds.amazonaws.com"
+    rds_database_name: "taskdb"
+    rds_endpoint: "saas-infra-lab-dev-postgres.c696ekgq616y.us-east-1.rds.amazonaws.com:5432"
+    rds_instance_endpoint: "saas-infra-lab-dev-postgres.c696ekgq616y.us-east-1.rds.amazonaws.com:5432"
+    rds_instance_id: "db-ISIQFXBDFFK6PB2MHXDBWFGYHU"
+    rds_instance_name: "taskdb"
+    rds_instance_username: "taskuser"
+    rds_port: 5432
+    rds_secret_arn: "arn:aws:secretsmanager:us-east-1:240623017727:secret:rds!db-1e315961-53a9-4f77-9e5f-4421ed376b60-AuWQPv"
+    rds_secret_name: "rds-db-credentials/saas-infra-lab-dev-postgres"
+    rds_security_group_id: "sg-0e73282ca72779ba6"
+    secrets_manager_role_arn: "arn:aws:iam::240623017727:role/saas-infra-lab-dev-saas-infra-lab-dev-secrets-manager-role"
+    secrets_manager_role_name: "saas-infra-lab-dev-saas-infra-lab-dev-secrets-manager-role"
+    service_names: {'cluster_name': 'saas-infra-lab-dev', 'dynamodb_lock_table': 'saas-infra-lab-terraform-state-lock', 'ecr_backend_repo_name': 'saas-infra-lab-dev-backend', 'ecr_frontend_repo_name': 'saas-infra-lab-dev-frontend', 'rds_instance_name': 'saas-infra-lab-dev-postgres', 'terraform_state_bucket': 'saas-infra-lab-terraform-state', 'vpc_name': 'saas-infra-lab-dev-vpc'}
+    tags_config: {'Environment': 'dev', 'ManagedBy': 'Terraform', 'Project': 'SaaSInfraLab', 'ProjectName': 'saas-infra-lab'}
+    vpc_id: "vpc-02e17ef6d10a2d97e"
+  tenants:
+    aws_region: "us-east-1"
+    cluster_name: "saas-infra-lab-dev"
+    configmaps_created: {'analytics': {'db_host': 'saas-infra-lab-dev-postgres.c696ekgq616y.us-east-1.rds.amazonaws.com', 'db_name': 'taskdb', 'db_port': '5432', 'name': 'backend-config', 'namespace': 'analytics'}, 'platform': {'db_host': 'saas-infra-lab-dev-postgres.c696ekgq616y.us-east-1.rds.amazonaws.com', 'db_name': 'taskdb', 'db_port': '5432', 'name': 'backend-config', 'namespace': 'platform'}}
+    namespace_isolation_enabled: True
+    rbac_enabled: True
+    secrets_created: {'analytics': {'backend_secret': 'backend-secret', 'namespace': 'analytics', 'postgresql_secret': 'postgresql-secret'}, 'platform': {'backend_secret': 'backend-secret', 'namespace': 'platform', 'postgresql_secret': 'postgresql-secret'}}
+    service_accounts_enabled: True
+    tenant_namespaces: {'analytics': 'analytics', 'platform': 'platform'}
+    tenant_network_policies: {'analytics': {'name': 'analytics-network-policy', 'namespace': 'analytics'}, 'platform': {'name': 'platform-network-policy', 'namespace': 'platform'}}
+    tenant_resource_quotas: {'analytics': {'name': 'analytics-quota', 'namespace': 'analytics'}, 'platform': {'name': 'platform-quota', 'namespace': 'platform'}}
+    tenant_service_accounts: {'analytics': {'name': 'analytics-sa', 'namespace': 'analytics'}, 'platform': {'name': 'platform-sa', 'namespace': 'platform'}}

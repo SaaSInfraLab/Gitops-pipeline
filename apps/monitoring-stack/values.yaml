@@ -1,0 +1,205 @@
+# kube-prometheus-stack Helm Chart Values
+# Popular monitoring stack with Prometheus, Grafana, and Alertmanager
+
+# Grafana Configuration
+grafana:
+  enabled: true
+  
+  # Service Configuration - LoadBalancer for direct access
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 3000
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # Use Network Load Balancer for better performance  
+  # Admin credentials (will be stored in Kubernetes secret)
+  adminUser: admin
+  adminPassword: admin  # Change this or use secret management
+  
+  # Persistence for dashboards and data sources
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClassName: gp2
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Popular dashboards to auto-import
+  defaultDashboardsEnabled: true
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+  
+  dashboards:
+    default:
+      # Node Exporter Full - Most popular Kubernetes dashboard
+      node-exporter-full:
+        gnetId: 1860
+        revision: 27
+        datasource: Prometheus
+      # Kubernetes Cluster Monitoring
+      kubernetes-cluster-monitoring:
+        gnetId: 6417
+        revision: 1
+        datasource: Prometheus
+      # Kubernetes Pod Monitoring
+      kubernetes-pod-monitoring:
+        gnetId: 6418
+        revision: 1
+        datasource: Prometheus
+      # Kubernetes Deployment Statefulset Daemonset metrics
+      kubernetes-deployment:
+        gnetId: 8588
+        revision: 1
+        datasource: Prometheus
+  
+  # Grafana configuration
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/"
+    security:
+      admin_user: admin
+      admin_password: admin
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://prometheus-operated:9090
+          isDefault: true
+          editable: true
+        # AWS CloudWatch data source for RDS metrics
+        - name: CloudWatch
+          type: cloudwatch
+          access: proxy
+          jsonData:
+            authType: default
+            defaultRegion: us-east-1
+          secureJsonData: {}
+          isDefault: false
+          editable: true
+
+# Prometheus Configuration
+prometheus:
+  enabled: true
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+  
+  # Retention period (15 days)
+  retention: 15d
+  retentionSize: 50Gi
+  
+  # Resource limits
+  prometheusSpec:
+    resources:
+      requests:
+        cpu: 1
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+    
+    # Storage configuration
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+    
+    # Scrape interval
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+    
+    # Service monitor selector (allows scraping application metrics)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    
+    # Pod monitor selector
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelector: {}
+    podMonitorNamespaceSelector: {}
+
+# Alertmanager Configuration
+alertmanager:
+  enabled: true
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+  
+  # Resource limits
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    
+    # Storage configuration
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp2
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+# Node Exporter - Collects node metrics (CPU, memory, disk, network)
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics - Collects Kubernetes object metrics
+kubeStateMetrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Prometheus Operator
+prometheusOperator:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Common labels
+commonLabels:
+  app: monitoring
+  managed-by: argocd
+  environment: dev
+

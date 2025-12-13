@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SaaSInfraLab/Gitops-pipeline
+    targetRevision: testing
+    path: argocd/applications
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+  revisionHistoryLimit: 10
+  # Only manage sample-saas-app applications
+  # Infrastructure (namespaces, network policies) is managed by Terraform
+  # Monitoring stack is not currently deployed
+

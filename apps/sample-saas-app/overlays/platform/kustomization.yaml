@@ -1,38 +1,79 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 namespace: platform
-
 resources:
   - ../../base
   - namespace.yaml
-  - aws-secrets-manager.yaml
-  - secret-sync-job.yaml
-
 commonLabels:
   tenant: platform
   environment: dev
-  app.kubernetes.io/managed-by: flux
-
+  app.kubernetes.io/managed-by: argocd
 images:
   - name: task-management-backend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
-    newTag: latest
+    newName: 240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
+    newTag: sha-4e9eaae
   - name: task-management-frontend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
-    newTag: latest
-
+    newName: 240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
+    newTag: sha-4e9eaae
 patches:
   - patch: |-
       - op: add
         path: /spec/template/metadata/labels/tenant
         value: platform
+      - op: add
+        path: /spec/selector/matchLabels/tenant
+        value: platform
+      - op: remove
+        path: /spec/template/spec/serviceAccountName
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2
+        value:
+          name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-host
+      - op: replace
+        path: /spec/template/spec/containers/0/env/3
+        value:
+          name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-port
+      - op: replace
+        path: /spec/template/spec/containers/0/env/4
+        value:
+          name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-name
+      - op: replace
+        path: /spec/template/spec/containers/0/env/5
+        value:
+          name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-user
+      - op: replace
+        path: /spec/template/spec/containers/0/env/6
+        value:
+          name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-password
     target:
       kind: Deployment
       name: backend
   - patch: |-
       - op: add
         path: /spec/template/metadata/labels/tenant
+        value: platform
+      - op: add
+        path: /spec/selector/matchLabels/tenant
         value: platform
     target:
       kind: Deployment
@@ -65,4 +106,39 @@ patches:
     target:
       kind: Service
       name: frontend-service
-
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0
+        value:
+          name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-host
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1
+        value:
+          name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-user
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2
+        value:
+          name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secret
+              key: db-password
+      - op: replace
+        path: /spec/template/spec/containers/0/env/3
+        value:
+          name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: db-name
+    target:
+      kind: Job
+      name: init-rds-database

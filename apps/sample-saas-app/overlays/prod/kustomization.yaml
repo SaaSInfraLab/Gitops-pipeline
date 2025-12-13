@@ -17,10 +17,10 @@ replicas:
 
 images:
   - name: task-management-backend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-prod-backend
+    newName: PLACEHOLDER_ECR_BACKEND_URL_PROD
     newTag: latest
   - name: task-management-frontend
-    newName: 821368347884.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-prod-frontend
+    newName: PLACEHOLDER_ECR_FRONTEND_URL_PROD
     newTag: latest
 
 patches:

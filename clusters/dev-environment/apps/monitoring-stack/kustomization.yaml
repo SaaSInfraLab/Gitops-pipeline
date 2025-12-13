@@ -4,8 +4,15 @@ kind: Kustomization
 namespace: monitoring
 
 resources:
+  # Reference the monitoring namespace from infrastructure
   - ../../../../infrastructure/namespaces/monitoring.yaml
+  
+  # Note: The monitoring stack is deployed via ArgoCD Application
+  # See: argocd/applications/monitoring-stack.yaml
+  # It uses the kube-prometheus-stack Helm chart with values from
+  # apps/monitoring-stack/values.yaml
 
-# Note: Monitoring stack deployment via Helm will be configured separately
-# This can reference a HelmRelease resource or Kustomize overlay
-
+commonLabels:
+  app: monitoring
+  managed-by: argocd
+  environment: dev

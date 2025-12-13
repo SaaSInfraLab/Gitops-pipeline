@@ -4,4 +4,4 @@ metadata:
   name: analytics
   labels:
     tenant: analytics
-    managed-by: flux
+    managed-by: argocd

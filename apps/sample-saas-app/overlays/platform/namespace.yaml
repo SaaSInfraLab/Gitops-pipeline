@@ -4,5 +4,5 @@ metadata:
   name: platform
   labels:
     tenant: platform
-    managed-by: flux
+    managed-by: argocd
 

@@ -4,6 +4,6 @@ metadata:
   name: monitoring
   labels:
     app: monitoring
-    managed-by: flux
+    managed-by: argocd
     environment: dev
 
