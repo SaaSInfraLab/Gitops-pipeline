@@ -109,6 +109,9 @@ cd argocd/bootstrap
 # Get admin password
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
+# Get admin password for windows
+kubectl -n argocd get secret argocd-initial-admin-secret ` -o jsonpath="{.data.password}" | ` ForEach-Object { [System.Text.Encoding]::UTF8.GetString([System.Convert ::FromBase64String($_)) }
+
 # Port-forward Argo CD UI
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 

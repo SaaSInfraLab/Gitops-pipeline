@@ -10,7 +10,8 @@ grafana:
     type: LoadBalancer
     port: 80
     targetPort: 3000
-  
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # Use Network Load Balancer for better performance  
   # Admin credentials (will be stored in Kubernetes secret)
   adminUser: admin
   adminPassword: admin  # Change this or use secret management

@@ -28,20 +28,135 @@ The following Grafana dashboards are automatically imported:
 4. **Kubernetes Deployment Statefulset Daemonset** (ID: 8588)
    - Deployment and workload metrics
 
+## Sample App Dashboard
+
+A custom dashboard designed for monitoring the sample SaaS application and cluster resources. This dashboard provides a comprehensive overview of:
+
+- **Namespace-level resource usage** (CPU and Memory)
+- **Pod counts per namespace**
+- **Node-level metrics** (CPU and Memory)
+
+### Dashboard Panels
+
+#### 1. Memory Usage by Namespace
+- **Type:** Bar Gauge
+- **Query:**
+  ```promql
+  sum(container_memory_working_set_bytes{container!="POD",container!=""}) by (namespace) / 1024 / 1024 / 1024
+  ```
+- **Unit:** GBs
+- **Purpose:** Shows total memory consumption per namespace
+- **Thresholds:** Green (< 80GB), Red (≥ 80GB)
+
+#### 2. CPU Usage by Namespace
+- **Type:** Time Series
+- **Query:**
+  ```promql
+  sum(rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m])) by (namespace)
+  ```
+- **Purpose:** Displays CPU usage trends over time, grouped by namespace
+- **Visualization:** Line chart showing historical CPU consumption
+
+#### 3. Pods per Namespace
+- **Type:** Gauge
+- **Query:**
+  ```promql
+  count(kube_pod_info) by (namespace)
+  ```
+- **Purpose:** Shows the number of pods running in each namespace
+- **Thresholds:** 
+  - Green (< 70%)
+  - Orange (70-85%)
+  - Red (> 85%)
+
+#### 4. Node CPU Usage
+- **Type:** Gauge
+- **Query:**
+  ```promql
+  100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+  ```
+- **Purpose:** Displays average CPU usage across all cluster nodes
+- **Thresholds:**
+  - Green (< 70%)
+  - Orange (70-85%)
+  - Red (> 85%)
+
+#### 5. Node Memory Usage
+- **Type:** Bar Gauge
+- **Query:**
+  ```promql
+  avg((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)
+  ```
+- **Unit:** Percent
+- **Purpose:** Shows average memory usage across all cluster nodes
+- **Thresholds:** Green (< 80%), Red (≥ 80%)
+
+### Importing the Dashboard
+
+To import this dashboard into Grafana:
+
+1. **Via Grafana UI:**
+   - Go to **Dashboards** → **Import**
+   - Click **Upload JSON file** and select `sample-app-dashboard.json`
+   - Or copy the JSON from the file and paste into the import dialog
+   - Select **Prometheus** as the data source
+   - Click **Import**
+
+2. **Dashboard File:**
+   - Location: `apps/monitoring-stack/sample-app-dashboard.json`
+   - Dashboard UID: `af6uxtjticp34d`
+   - Dashboard ID: `28`
+
+### Dashboard Features
+
+- **Real-time monitoring:** Updates automatically with 30-minute default time range
+- **Color-coded thresholds:** Visual indicators for resource usage levels
+- **Namespace grouping:** Easy identification of resource consumption by namespace
+- **Multi-metric view:** CPU, memory, and pod counts in a single view
+- **Browser timezone:** Automatically adjusts to your local timezone
+
+### Customization
+
+To customize this dashboard:
+
+1. Open the dashboard in Grafana
+2. Click the **⚙️ (Settings)** icon
+3. Select **JSON Model** to edit the full configuration
+4. Or edit individual panels by clicking **Edit** on each panel
+
+You can customize panels directly in Grafana or modify the JSON file and re-import.
+
 ## Accessing Grafana
 
 ### Get LoadBalancer URL
 
+**Bash/Git Bash:**
 ```bash
-kubectl get svc -n monitoring grafana
+kubectl get svc -n monitoring monitoring-stack-grafana
 ```
 
-The `EXTERNAL-IP` column shows the LoadBalancer DNS name.
+**PowerShell:**
+```powershell
+kubectl get svc -n monitoring monitoring-stack-grafana
+```
+
+The `EXTERNAL-IP` column shows the LoadBalancer DNS name. If it shows `<pending>`, wait a few minutes for AWS to provision the LoadBalancer.
 
 ### Get Admin Password
 
+**Bash/Git Bash:**
 ```bash
-kubectl get secret -n monitoring grafana -o jsonpath='{.data.admin-password}' | base64 -d && echo
+kubectl get secret -n monitoring monitoring-stack-grafana -o jsonpath='{.data.admin-password}' | base64 -d && echo
+```
+
+**PowerShell:**
+```powershell
+kubectl get secret -n monitoring monitoring-stack-grafana -o jsonpath='{.data.admin-password}' | ForEach-Object { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($_)) }
+```
+
+**Alternative (works in both):**
+```bash
+kubectl get secret -n monitoring monitoring-stack-grafana -o jsonpath='{.data.admin-password}' | base64 --decode
 ```
 
 Default username: `admin`
@@ -148,9 +263,10 @@ Approximate resource usage:
 
 ### Grafana Not Accessible
 
+**Bash/Git Bash:**
 ```bash
 # Check service
-kubectl get svc -n monitoring grafana
+kubectl get svc -n monitoring monitoring-stack-grafana
 
 # Check pods
 kubectl get pods -n monitoring | grep grafana
@@ -158,6 +274,24 @@ kubectl get pods -n monitoring | grep grafana
 # Check logs
 kubectl logs -n monitoring -l app.kubernetes.io/name=grafana
 ```
+
+**PowerShell:**
+```powershell
+# Check service
+kubectl get svc -n monitoring monitoring-stack-grafana
+
+# Check pods
+kubectl get pods -n monitoring | Select-String "grafana"
+
+# Check logs
+kubectl logs -n monitoring -l app.kubernetes.io/name=grafana
+```
+
+**If LoadBalancer is not ready, use port-forward:**
+```bash
+kubectl port-forward -n monitoring svc/monitoring-stack-grafana 3000:80
+```
+Then access at `http://localhost:3000`
 
 ### Prometheus Not Scraping Metrics
 
@@ -173,13 +307,21 @@ kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090
 ### Dashboards Not Showing
 
 1. Check if dashboards are imported:
+   **Bash/Git Bash:**
    ```bash
    kubectl get configmap -n monitoring | grep grafana
+   ```
+   **PowerShell:**
+   ```powershell
+   kubectl get configmap -n monitoring | Select-String "grafana"
    ```
 
 2. Verify dashboard IDs in `values.yaml` are correct
 
-3. Check Grafana logs for import errors
+3. Check Grafana logs for import errors:
+   ```bash
+   kubectl logs -n monitoring -l app.kubernetes.io/name=grafana
+   ```
 
 ## Additional Resources
 
