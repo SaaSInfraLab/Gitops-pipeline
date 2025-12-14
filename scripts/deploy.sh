@@ -108,8 +108,9 @@ if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -qiE "Invalid for_each|fo
     }
     
     echo ""
-    echo "Applying EKS Cluster..."
-    terraform apply -target=module.eks.module.eks.aws_eks_cluster.main \
+    echo "Applying EKS module (cluster and all outputs)..."
+    # Apply entire EKS module to ensure cluster_security_group_id output is available for RDS
+    terraform apply -target=module.eks \
       -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1 | tee /tmp/terraform-apply-stage2.log || {
       echo "⚠️  Stage 2 apply had issues, but continuing..."
     }
