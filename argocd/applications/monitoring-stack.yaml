@@ -14,7 +14,7 @@ spec:
       helm:
         releaseName: monitoring-stack
     - repoURL: https://github.com/SaaSInfraLab/Gitops-pipeline
-      targetRevision: testing
+      targetRevision: main
       ref: values
       helm:
         valueFiles:

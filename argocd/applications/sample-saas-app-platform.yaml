@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/SaaSInfraLab/Gitops-pipeline
-    targetRevision: testing
+    targetRevision: main
     path: apps/sample-saas-app/overlays/platform
   destination:
     server: https://kubernetes.default.svc
