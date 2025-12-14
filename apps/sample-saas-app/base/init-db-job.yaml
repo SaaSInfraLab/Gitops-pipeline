@@ -46,6 +46,7 @@ spec:
         - |
           echo "Initializing RDS database..."
           export PGPASSWORD=${DB_PASSWORD}
+          export PGSSLMODE=require
           
           echo "Running migration 001_create_tenants.sql..."
           psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} -f /migrations/001_create_tenants.sql
