@@ -1,3 +1,4 @@
+# Updated: 2025-12-14T06:18:41Z
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: analytics
@@ -10,10 +11,10 @@ commonLabels:
 images:
   - name: task-management-backend
     newName: 240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-backend
-    newTag: sha-4e9eaae
+    newTag: sha-879e65e
   - name: task-management-frontend
     newName: 240623017727.dkr.ecr.us-east-1.amazonaws.com/saas-infra-lab-dev-frontend
-    newTag: sha-4e9eaae
+    newTag: sha-879e65e
 patches:
   - patch: |-
       - op: add
