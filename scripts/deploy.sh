@@ -98,15 +98,28 @@ if [ $TF_EXIT_CODE -ne 0 ] && echo "$TF_OUTPUT" | grep -qiE "Invalid for_each|fo
     # Try to apply base resources first (VPC, Security Groups, EKS Cluster)
     # This creates the resources that for_each depends on
     echo ""
-    echo "Step 1: Applying base resources (VPC, Security Groups, EKS Cluster)..."
-    terraform apply -target=module.vpc -target=module.eks.module.eks.aws_eks_cluster.main \
+    echo "=========================================="
+    echo "Step 1: Applying Base Resources First"
+    echo "=========================================="
+    echo "Applying VPC and Security Groups first..."
+    terraform apply -target=module.vpc \
       -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1 | tee /tmp/terraform-apply-stage1.log || {
       echo "⚠️  Stage 1 apply had issues, but continuing..."
     }
     
+    echo ""
+    echo "Applying EKS Cluster..."
+    terraform apply -target=module.eks.module.eks.aws_eks_cluster.main \
+      -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1 | tee /tmp/terraform-apply-stage2.log || {
+      echo "⚠️  Stage 2 apply had issues, but continuing..."
+    }
+    
     # Now retry full apply (for_each should work now that dependencies exist)
     echo ""
-    echo "Step 2: Retrying full infrastructure apply..."
+    echo "=========================================="
+    echo "Step 2: Retrying Full Infrastructure Apply"
+    echo "=========================================="
+    echo "Now that base resources exist, retrying full apply..."
     terraform apply -var-file="${COMMON_TFVARS}" -var-file="${INFRA_TFVARS}" --auto-approve 2>&1 | tee /tmp/terraform-apply-output.log
     TF_EXIT_CODE=${PIPESTATUS[0]}
     TF_OUTPUT=$(cat /tmp/terraform-apply-output.log)
