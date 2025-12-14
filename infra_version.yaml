@@ -1,5 +1,5 @@
-version: "1.0.6"
-last_deployed: "2025-12-14T07:07:14Z"
+version: "1.0.7"
+last_deployed: "2025-12-14T07:16:48Z"
 cluster_name: "cluster_name"
 aws_region: "aws_region"
 terraform_outputs:
